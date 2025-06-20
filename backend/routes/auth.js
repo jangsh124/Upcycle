@@ -3,8 +3,8 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const User = require('/Users/seokhyeonjang/auth-app/backend/model/User.js');
-const authMiddleware = require('/Users/seokhyeonjang/auth-app/backend/middleware/auth.js');
+const User = require('../model/User.js');
+const authMiddleware = require('../middleware/auth.js');
 
 const router = express.Router();
 
