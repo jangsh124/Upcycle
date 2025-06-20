@@ -3,8 +3,9 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const User = require('/Users/seokhyeonjang/auth-app/backend/model/User.js');
-const authMiddleware = require('/Users/seokhyeonjang/auth-app/backend/middleware/auth.js');
+const path = require('path');
+const User = require(path.join(__dirname, '../model/User.js'));
+const authMiddleware = require(path.join(__dirname, '../middleware/auth.js'));
 
 const router = express.Router();
 
