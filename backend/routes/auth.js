@@ -3,8 +3,8 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const User = require('/Users/seokhyeonjang/auth-app/backend/model/User.js');
-const authMiddleware = require('/Users/seokhyeonjang/auth-app/backend/middleware/auth.js');
+const User = require('../model/User');
+const authMiddleware = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -34,8 +34,14 @@ router.post('/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ error: 'Invalid password' });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.json({ message: 'Login successful', token });
+   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    expiresIn: '1h',
+  });
+  res.json({
+    message: 'Login successful',
+    user: { id: user._id, email: user.email },
+    token,
+  });
   } catch (err) {
     res.status(500).json({ error: 'Login failed' });
   }

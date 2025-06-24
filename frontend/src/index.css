@@ -28,6 +28,12 @@ button {
   font-size: 1.1em;
   cursor: pointer;
 }
+
+/* Provide slight spacing for action buttons */
+.login-container button,
+.signup-container button {
+  margin-bottom: 5px;
+}
 button:hover {
   background: #339af0;
 }

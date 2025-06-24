@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-export default function Login() {
+export default function Login({ onSwitch }) {
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
   const [msg, setMsg] = useState("");
@@ -38,6 +38,7 @@ export default function Login() {
         /><br />
         <button type="submit">로그인</button>
       </form>
+            <button type="button" onClick={onSwitch}>회원가입</button>
       <div>{msg}</div>
     </div>
   );

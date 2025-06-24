@@ -1,13 +1,18 @@
 // src/App.js
-import React from "react";
+import React, { useState } from "react";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 
 function App() {
+  const [page, setPage] = useState("login");
+  
   return (
     <div>
-      <Login />
-      {/* <Signup />  // 둘 중 하나만 노출하려면 분기문 작성 */}
+      {page === "login" ? (
+        <Login onSwitch={() => setPage("signup")} />
+      ) : (
+        <Signup onSwitch={() => setPage("login")} />
+      )}
     </div>
   );
 }

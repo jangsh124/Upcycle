@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-export default function Signup() {
+export default function Signup({ onSwitch }) {
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
   const [msg, setMsg] = useState("");
@@ -38,6 +38,7 @@ export default function Signup() {
         /><br />
         <button type="submit">가입</button>
       </form>
+      <button type="button" onClick={onSwitch}>로그인</button>
       <div>{msg}</div>
     </div>
   );
