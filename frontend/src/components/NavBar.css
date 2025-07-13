@@ -1,0 +1,42 @@
+.navbar {
+  height: 64px;
+  padding: 0 24px;
+  background: #f8f9fc;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+.navbar-left {
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.navbar-logo {
+  color: #1d4ed8;
+  text-decoration: none;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.upload-button {
+  background-color: #2563eb;
+  color: white;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.login-link {
+  color: #333;
+  text-decoration: none;
+  font-weight: bold;
+}

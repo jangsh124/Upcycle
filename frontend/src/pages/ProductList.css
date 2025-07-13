@@ -1,0 +1,43 @@
+.product-add-container {
+  text-align: right;
+  margin-bottom: 20px; /* 간격 조금 더 늘림 */
+}
+
+.product-add-button {
+  padding: 8px 16px; /* 버튼 크기 살짝 키움 */
+  background: #1c7ed6;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px; /* 모서리 좀 더 둥글게 */
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+  cursor: pointer;
+}
+.product-add-button:hover {
+  background: #1864ab; /* 호버시 약간 어두운 색으로 */
+}
+
+.product-list-container {
+  padding: 20px;
+}
+
+.product-grid {
+  display: flex;
+  gap: 20px; /* 간격 좀 더 넉넉히 */
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.product-card {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 12px;
+  width: 200px;
+  background: white;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.product-card:hover {
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.15);
+}

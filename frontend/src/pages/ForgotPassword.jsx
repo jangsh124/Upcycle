@@ -16,10 +16,15 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div>
+    <div className="login-container">
       <h2>비밀번호 찾기</h2>
       <form onSubmit={handleSubmit}>
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <input
+          type="email"
+          placeholder="이메일"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        /><br />
         <button type="submit">전송</button>
       </form>
       <div>{msg}</div>

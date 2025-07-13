@@ -1,0 +1,143 @@
+/* ── 폼 전체 컨테이너 */
+.product-form-container {
+  width: 400px;
+  margin: 40px auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+}
+
+/* ── 제목 */
+.product-form-container .form-title {
+  margin-bottom: 16px;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+/* ── 폼 내부 레이아웃 */
+.product-form {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── 텍스트 입력, textarea, select */
+.product-form input[type="text"],
+.product-form textarea,
+.product-form select {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-sizing: border-box;
+  font-size: 14px;
+}
+
+.product-form textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+/* ── 지역 선택(select × 2) */
+.location-select {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.location-select select {
+  flex: 1;
+}
+
+/* ── 가격 입력 + “원” */
+.price-input-container {
+  position: relative;
+  margin-bottom: 12px;
+}
+.price-input-container .price-unit {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #555;
+  font-weight: bold;
+}
+
+/* ── 파일 업로드 버튼 */
+.form-file-input {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+/* ── 이미지 미리보기: 기존·새로 선택 모두 동일하게 처리 */
+.image-preview-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.image-preview-item {
+  position: relative;
+}
+.image-preview-item img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.image-remove-btn {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: #e74c3c;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-weight: bold;
+  line-height: 18px;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* ── 대표 이미지 선택 강조 */
+.image-preview-item.main-selected img {
+  border: 2px solid #2471e7;
+}
+.main-badge {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  background: #2471e7;
+  color: #fff;
+  padding: 2px 6px;
+  font-size: 0.75rem;
+  border-radius: 4px;
+}
+
+/* ── 제출 버튼 */
+.form-submit-btn {
+  width: 100%;
+  padding: 12px;
+  background: #2471e7;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+}
+.form-submit-btn:hover {
+  background: #1a5bc7;
+}
+
+/* ── 에러·성공 메시지 */
+.form-msg {
+  margin-top: 12px;
+  font-size: 14px;
+  color: red;
+  text-align: center;
+}

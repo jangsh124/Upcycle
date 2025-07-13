@@ -22,8 +22,4 @@ yarn-debug.log*
 yarn-error.log*
 
 # OS generated files
-<<<<<<< HEAD
 .DS_Store
-=======
-.DS_Store
->>>>>>> 7966846ffd4387d02edc4a925d5353362d4a5d59

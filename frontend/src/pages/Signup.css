@@ -1,0 +1,139 @@
+.signup-container {
+  background: #fff;
+  padding: 40px 40px 32px 40px;
+  max-width: 410px;
+  margin: 60px auto;
+  border-radius: 24px;
+  box-shadow: 0 4px 24px rgba(30,60,90,0.09);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.signup-container h2 {
+  font-size: 2.3rem;
+  font-weight: bold;
+  margin-bottom: 28px;
+}
+
+.signup-container form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.signup-container input[type="email"],
+.signup-container input[type="password"],
+.signup-container input[type="text"] {
+  font-size: 1.15rem;
+  padding: 14px 14px;
+  border: 1.7px solid #ddd;
+  border-radius: 8px;
+  margin-bottom: 0;
+  transition: border-color 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+  background: #fff;
+}
+
+.signup-container input[type="email"]:focus,
+.signup-container input[type="password"]:focus,
+.signup-container input[type="text"]:focus {
+  border-color: #1e88e5;
+  outline: none;
+}
+
+.input-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.pw-row {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.pw-input {
+  padding-right: 40px !important;  /* 오른쪽 아이콘 공간 확보 */
+  width: 100%;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1.15em;
+  color: #888;
+  padding: 0;
+  margin: 0;
+  height: 32px;
+  width: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  outline: none !important;
+  box-shadow: none !important;
+  transition: color 0.16s;
+}
+
+.password-toggle-btn:focus,
+.password-toggle-btn:active {
+  color: #1e88e5;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.password-policy {
+  color: #d9534f;
+  font-size: 0.98em;
+  margin-bottom: 10px;
+  margin-top: -4px;
+  padding-left: 2px;
+  letter-spacing: -1px;
+}
+
+.signup-btn {
+  background: #b8c2cc;   /* 비활성(회색) */
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.18rem;
+  font-weight: 500;
+  cursor: not-allowed;
+  padding: 14px 0;
+  margin-bottom: 6px;
+  transition: background 0.2s;
+}
+
+.signup-btn.active {
+  background: #1e88e5;
+  cursor: pointer;
+}
+.signup-btn.active:hover {
+  background: #1872c2;
+}
+.signup-btn.inactive {
+  background: #b8c2cc;
+  cursor: not-allowed;
+}
+
+.signup-container .error {
+  color: #c60f0f;
+  font-size: 1.03em;
+  margin-top: 7px;
+}
+
+.signup-container .success {
+  color: #198941;
+  font-size: 1.05em;
+  margin-top: 7px;
+}

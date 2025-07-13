@@ -45,3 +45,17 @@ nav a {
 nav a:hover {
   text-decoration: underline;
 }
+
+.forgot-password-link {
+  display: block;
+  margin-top: 8px;
+  text-align: center;
+  font-size: 0.9em;
+  color: #1c7ed6;
+  text-decoration: none;
+}
+
+.forgot-password-link:hover {
+  text-decoration: underline;
+}
+

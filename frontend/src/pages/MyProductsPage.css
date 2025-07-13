@@ -1,0 +1,19 @@
+/* src/pages/MyProductsPage.css */
+
+.my-products-page {
+  max-width: 1000px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.my-products-page h2 {
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+}
+
+.my-products-msg {
+  text-align: center;
+  margin-top: 2rem;
+  font-size: 1.2rem;
+  color: #666;
+}

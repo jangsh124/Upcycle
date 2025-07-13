@@ -1,0 +1,42 @@
+.account-menu-container {
+  position: relative;
+  display: inline-block;
+}
+
+.account-button {
+  background-color: #000;
+  color: #fff;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.dropdown-menu {
+  position: absolute;
+  right: 0;
+  margin-top: 8px;
+  width: 200px;
+  background: #fff;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  z-index: 100;
+  padding: 8px;
+}
+
+.dropdown-email {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  font-weight: bold;
+}
+
+.dropdown-item {
+  padding: 12px 8px;
+  cursor: pointer;
+}
+
+.dropdown-item.logout {
+  color: red;
+  border-top: 1px solid #eee;
+}
