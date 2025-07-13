@@ -3,9 +3,15 @@ import React from "react";
 import { Link } from "react-router-dom";
 import "./ProductCard.css";
 
-// 이미지 URL이 절대경로가 아닐 때만 백엔드 서버 주소를 붙여주는 헬퍼
-const getImageUrl = (path) =>
-  path.startsWith("http") ? path : `http://localhost:5001${path}`;
+// 이미지 경로를 절대 URL로 변환
+const getImageUrl = (path) => {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+  if (path.startsWith("/uploads")) {
+    return `http://localhost:5001${path}`;
+  }
+  return `http://localhost:5001/uploads/${path.replace(/^uploads\//, "")}`;
+};
 
 export default function ProductCard({ product, onEdit, onDelete }) {
   if (!product) return null;

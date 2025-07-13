@@ -4,9 +4,15 @@ import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import "./ProductDetail.css";
 
-// helper: 서버가 넘겨주는 path가 절대 URL 아닐 때만 prefix
-const getImageUrl = (path) =>
-  path.startsWith("http") ? path : `/uploads/${path}`;
+// 이미지 경로를 절대 URL로 변환
+const getImageUrl = (path) => {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+  if (path.startsWith("/uploads")) {
+    return `http://localhost:5001${path}`;
+  }
+  return `http://localhost:5001/uploads/${path.replace(/^uploads\//, "")}`;
+};
 
 export default function ProductDetail() {
   const { id } = useParams();
