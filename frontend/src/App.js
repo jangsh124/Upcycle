@@ -24,7 +24,7 @@ import ProductDetail from "./pages/ProductDetail";
 // ─── 아래 한 줄을 추가 ────────────────────────────────────
 // 모든 axios 요청의 기본 URL을 '/api'로 설정하면,
 // CRA의 proxy 설정을 통해 localhost:5001로 프록시됩니다.
-axios.defaults.baseURL = "/api";
+axios.defaults.baseURL = "http://localhost:5001/api";
 
 // 401 응답 시 자동 로그아웃
 axios.interceptors.response.use(

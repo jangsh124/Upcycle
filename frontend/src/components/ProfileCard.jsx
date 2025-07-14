@@ -2,6 +2,7 @@ import React from "react";
 import "./ProfileCard.css";
 
 export default function ProfileCard({ user, onEditClick }) {
+  // user.profileImage가 있으면 서버 절대경로, 없으면 기본 이미지
   const getImageSrc = () => {
     if (!user.profileImage) return "/default-profile.png";
     if (user.profileImage.startsWith("/uploads")) {
@@ -10,10 +11,8 @@ export default function ProfileCard({ user, onEditClick }) {
     return user.profileImage;
   };
 
-  // undefined가 아닐 때만 출력!
-  if (user && user.profileImage) {
-    console.log("user.profileImage:", user.profileImage);
-  }
+  // 로그는 여기!
+  console.log("user.profileImage:", user.profileImage);
 
   return (
     <div className="profile-card">

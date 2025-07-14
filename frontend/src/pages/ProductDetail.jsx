@@ -3,10 +3,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import "./ProductDetail.css";
-
-// helper: 서버가 넘겨주는 path가 절대 URL 아닐 때만 prefix
-const getImageUrl = (path) =>
-  path.startsWith("http") ? path : `/uploads/${path}`;
+import getImageUrl from "../utils/getImageUrl";
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -22,19 +19,18 @@ export default function ProductDetail() {
     // 1️⃣ 내 정보 가져오기 (있으면)
     if (token) {
       axios
-        .get("/api/user/me", { headers: { Authorization: `Bearer ${token}` } })
+        .get("/user/me", { headers: { Authorization: `Bearer ${token}` } })
         .then((res) => {
           const me = res.data.user || res.data;
           setUser(me);
         })
-        .catch(() => {
-          // 이미 인터셉터에서 401 처리해줄 거라면 생략해도 됩니다.
-        });
+        .catch(() => {});
     }
 
     // 2️⃣ 상품 정보 가져오기
+    console.log("🔍 ProductDetail 요청 ID:", id);
     axios
-      .get(`/api/products/${id}`)
+      .get(`/products/${id}`)
       .then((res) => {
         setProduct(res.data);
         setMainImageIndex(0);
@@ -58,7 +54,6 @@ export default function ProductDetail() {
     return <div className="product-detail-loading">로딩 중…</div>;
   }
 
-  // ownerId 판단
   const ownerId =
     product.ownerId ||
     product.sellerId ||
@@ -74,7 +69,7 @@ export default function ProductDetail() {
     if (!window.confirm("정말 삭제하시겠습니까?")) return;
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`/api/products/${id}`, {
+      await axios.delete(`/products/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       alert("삭제되었습니다.");
@@ -88,7 +83,6 @@ export default function ProductDetail() {
 
   return (
     <div className="product-detail-container">
-      {/* Images */}
       <div className="product-detail-images">
         <div className="thumbnail-list">
           {images.map((img, idx) => (
@@ -117,7 +111,6 @@ export default function ProductDetail() {
         </div>
       </div>
 
-      {/* Info + Actions */}
       <div className="product-detail-info">
         <h1>{product.title}</h1>
         <p className="location">

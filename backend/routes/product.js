@@ -1,27 +1,37 @@
 // routes/product.js
 const express = require('express');
 const Product = require('../model/Product');
-const router = express.Router();
 const authMiddleware = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 
+const router = express.Router();
+
 // ➊ 정렬 옵션 정의
 const SORT_OPTIONS = {
-  'createdAt_desc': { createdAt: -1 },
-  'createdAt_asc':  { createdAt:  1 },
-  'price_desc':     { price:     -1 },
-  'price_asc':      { price:      1 },
+  createdAt_desc: { createdAt: -1 },
+  createdAt_asc:  { createdAt:  1 },
+  price_desc:     { price:     -1 },
+  price_asc:      { price:      1 },
 };
 
-// multer 저장 설정 (생략)
+// ➋ multer 설정 (이미지 업로드)
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../uploads'));
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + '-' + file.originalname);
+  }
+});
+const upload = multer({ storage });
 
-// ➋ 전체 상품 목록 + 키워드 검색 + 동적 정렬
+// ──────────────── 기본 목록 조회 ────────────────
+// GET /api/products?keyword=&sort=
 router.get('/', async (req, res) => {
   try {
     const { keyword = '', sort } = req.query;
-    // 넘어온 sort 값이 없거나 목록에 없으면 최신순 기본
-    const sortObj = SORT_OPTIONS[sort] || SORT_OPTIONS['createdAt_desc'];
+    const sortObj = SORT_OPTIONS[sort] || SORT_OPTIONS.createdAt_desc;
 
     const products = await Product
       .find({ title: { $regex: keyword, $options: 'i' } })
@@ -29,31 +39,94 @@ router.get('/', async (req, res) => {
 
     res.json(products);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-// ➌ 내가 등록한 상품 목록 + 동적 정렬
+// ───────────── 내가 등록한 상품 조회 ─────────────
+// GET /api/products/my?sort=
 router.get('/my', authMiddleware, async (req, res) => {
   try {
-    if (!req.user?.id) {
-      return res.status(401).json({ error: '인증이 필요합니다.' });
-    }
-
-    const { sort } = req.query;
-    const sortObj = SORT_OPTIONS[sort] || SORT_OPTIONS['createdAt_desc'];
-
+    const sortObj = SORT_OPTIONS[req.query.sort] || SORT_OPTIONS.createdAt_desc;
     const myProducts = await Product
       .find({ sellerId: req.user.id })
       .sort(sortObj);
 
-    res.json({ products: myProducts });
+    res.json(myProducts);
   } catch (err) {
-    res.status(500).json({ error: 'Server error', detail: String(err) });
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
-// ➍ 이하 상품 상세, 등록, 수정, 삭제 라우트는 그대로 사용
-//    (생략)
+// ───────────── 단일 상품 상세 조회 ─────────────
+// GET /api/products/:id
+router.get('/:id', async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ error: 'Product not found' });
+    res.json(product);
+  } catch (err) {
+    console.error(err);
+    res.status(400).json({ error: 'Invalid product ID' });
+  }
+});
+
+// ───────────── 상품 등록 ─────────────
+// POST /api/products
+router.post('/', authMiddleware, upload.array('images', 5), async (req, res) => {
+  try {
+    const { title, description, price, location } = req.body;
+    const imageFiles = req.files.map(f => f.filename);
+    const newProduct = new Product({
+      title,
+      description,
+      price,
+      location: JSON.parse(location || '{}'),
+      images: imageFiles,
+      sellerId: req.user.id,
+    });
+    await newProduct.save();
+    res.status(201).json(newProduct);
+  } catch (err) {
+    console.error(err);
+    res.status(400).json({ error: 'Failed to create product' });
+  }
+});
+
+// ───────────── 상품 수정 ─────────────
+// PATCH /api/products/:id
+router.patch('/:id', authMiddleware, upload.array('images', 5), async (req, res) => {
+  try {
+    const updates = { ...req.body };
+    if (req.files.length) {
+      updates.images = req.files.map(f => f.filename);
+    }
+    const updated = await Product.findByIdAndUpdate(
+      req.params.id,
+      updates,
+      { new: true }
+    );
+    if (!updated) return res.status(404).json({ error: 'Product not found' });
+    res.json(updated);
+  } catch (err) {
+    console.error(err);
+    res.status(400).json({ error: 'Failed to update product' });
+  }
+});
+
+// ───────────── 상품 삭제 ─────────────
+// DELETE /api/products/:id
+router.delete('/:id', authMiddleware, async (req, res) => {
+  try {
+    const deleted = await Product.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ error: 'Product not found' });
+    res.json({ message: 'Product deleted' });
+  } catch (err) {
+    console.error(err);
+    res.status(400).json({ error: 'Failed to delete product' });
+  }
+});
 
 module.exports = router;

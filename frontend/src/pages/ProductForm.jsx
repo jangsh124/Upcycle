@@ -80,8 +80,8 @@ export default function ProductForm() {
     formData.append("title", title);
     formData.append("description", description);
     formData.append("price", price);
-    formData.append("sido", sido);
-    formData.append("gugun", gugun);
+// 변경: location 단일 키로 JSON 문자열을 전송
+     formData.append("location", JSON.stringify({ sido, gugun }));
     formData.append("mainImageIndex", mainImageIndex);
     formData.append("existingImages", JSON.stringify(existingImages));
     newFiles.forEach(f => formData.append("images", f));

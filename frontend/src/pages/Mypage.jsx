@@ -5,6 +5,8 @@ import { Link, useNavigate } from "react-router-dom";
 import ProfileCard from "../components/ProfileCard";
 import ProfileEditModal from "../components/ProfileEditModal";
 import "./Mypage.css";
+import getImageUrl from "../utils/getImageUrl";
+
 
 export default function MyPage() {
   const [user, setUser] = useState(null);
@@ -153,7 +155,7 @@ export default function MyPage() {
                   className="mypage-product-thumb"
                   style={{
                     backgroundImage: item.images && item.images.length
-                      ? `url(http://localhost:5001${item.images[0]})`
+                      ? `url(${getImageUrl(item.images[0])})`
                       : `url(/noimage.png)`
                   }}
                 />

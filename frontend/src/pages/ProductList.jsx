@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 import "./ProductList.css";
 
-// 정렬 옵션 목록
+// 정렬 옵션 목록       
 const SORT_OPTIONS = [
   { label: "최신순",     value: "createdAt_desc" },
   { label: "오래된순",   value: "createdAt_asc"  },
