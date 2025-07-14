@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import { regionData, SIDO_LIST } from "../regionData";
+import getImageUrl from "../utils/getImageUrl";
 import "./productForm.css";
 
 export default function ProductForm() {
@@ -20,6 +21,12 @@ export default function ProductForm() {
   const [newFiles, setNewFiles] = useState([]);
   const [mainImageIndex, setMainImageIndex] = useState(0);
   const [msg, setMsg] = useState("");
+  const getFileInfoText = () => {
+    const parts = [];
+    if (newFiles.length) parts.push(newFiles.map(f => f.name).join(', '));
+    if (existingImages.length) parts.push(`기존 이미지 ${existingImages.length}개`);
+    return parts.length ? parts.join(', ') : '선택된 파일이 없습니다.';
+  };
 
   // 수정 모드면 기존 값 불러오기
   useEffect(() => {
@@ -171,29 +178,33 @@ export default function ProductForm() {
           multiple
           onChange={handleImageChange}
         />
+        <div className="file-info">{getFileInfoText()}</div>
 
         {/* 이미지 미리보기와 대표 이미지 선택 기능 */}
         {(existingImages.length > 0 || newFiles.length > 0) && (
           <div className="image-preview-container">
             {[...existingImages, ...newFiles.map(f => URL.createObjectURL(f))]
-              .map((src, idx) => (
-                <div
-                  key={idx}
-                  className={`image-preview-item ${idx === mainImageIndex ? 'main-selected' : ''}`}
-                >
-                  <img
-                    src={src}
-                    alt={`preview-${idx}`}
-                    onClick={() => setMainImageIndex(idx)}
-                  />
-                  <button
-                    type="button"
-                    className="image-remove-btn"
-                    onClick={() => (idx < existingImages.length ? removeExistingImage(idx) : removeNewFile(idx - existingImages.length))}
-                  >×</button>
-                  {idx === mainImageIndex && <span className="main-badge">대표</span>}
-                </div>
-              ))}
+              .map((src, idx) => {
+                const url = idx < existingImages.length ? getImageUrl(src) : src;
+                return (
+                  <div
+                    key={idx}
+                    className={`image-preview-item ${idx === mainImageIndex ? 'main-selected' : ''}`}
+                  >
+                    <img
+                      src={url}
+                      alt={`preview-${idx}`}
+                      onClick={() => setMainImageIndex(idx)}
+                    />
+                    <button
+                      type="button"
+                      className="image-remove-btn"
+                      onClick={() => (idx < existingImages.length ? removeExistingImage(idx) : removeNewFile(idx - existingImages.length))}
+                    >×</button>
+                    {idx === mainImageIndex && <span className="main-badge">대표</span>}
+                  </div>
+                );
+              })}
           </div>
         )}
 

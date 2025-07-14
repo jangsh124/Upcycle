@@ -70,6 +70,13 @@
   margin-bottom: 12px;
 }
 
+/* ── 파일 선택 정보 표시 */
+.file-info {
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+  color: #555;
+}
+
 /* ── 이미지 미리보기: 기존·새로 선택 모두 동일하게 처리 */
 .image-preview-container {
   display: flex;

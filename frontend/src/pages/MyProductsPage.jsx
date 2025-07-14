@@ -20,7 +20,12 @@ export default function MyProductsPage() {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then(res => {
-        setProducts(res.data.products || []);
+        const data = Array.isArray(res.data.products)
+          ? res.data.products
+          : Array.isArray(res.data)
+          ? res.data
+          : [];
+        setProducts(data);
       })
       .catch(err => {
         console.error("내 상품 로드 오류:", err);
