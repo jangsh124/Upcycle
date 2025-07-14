@@ -104,13 +104,12 @@ router.patch('/:id', authMiddleware, upload.array('images', 5), async (req, res)
     if (updates.location) {
       try {
         updates.location = JSON.parse(updates.location);
-      } catch {
-        updates.location = {};
+      } catch (err) {
+        return res.status(400).json({ error: 'Invalid location format' });
       }
     }
 
-    if (req.files.length) {
-      let existingImages = [];
+    let existingImages = [];
     if (updates.existingImages) {
       try {
         existingImages = JSON.parse(updates.existingImages);
@@ -120,23 +119,10 @@ router.patch('/:id', authMiddleware, upload.array('images', 5), async (req, res)
     }
     delete updates.existingImages;
 
-    let parsedLocation;
-    if (updates.location) {
-      try {
-        parsedLocation = JSON.parse(updates.location);
-      } catch (err) {
-        return res.status(400).json({ error: 'Invalid location format' });
-      }
-    }
-    delete updates.location;
+  const uploadedImages = (req.files || []).map(f => f.filename);
 
-    const uploadedImages = req.files.map(f => f.filename);
     updates.images = [...existingImages, ...uploadedImages];
-
-    if (parsedLocation) {
-      updates.location = parsedLocation;
-    }
-  }
+  
     const updated = await Product.findByIdAndUpdate(
       req.params.id,
       updates,
