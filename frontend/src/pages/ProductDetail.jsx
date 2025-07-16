@@ -12,6 +12,7 @@ export default function ProductDetail() {
   const [product, setProduct] = useState(null);
   const [mainImageIndex, setMainImageIndex] = useState(0);
   const [user, setUser] = useState(null);
+  const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -42,10 +43,10 @@ export default function ProductDetail() {
           navigate("/login", { replace: true });
         } else if (status === 404) {
           alert("존재하지 않는 상품입니다.");
-          navigate("/", { replace: true });
+          navigate("/products", { replace: true });
         } else {
           alert("상품을 불러오는 데 실패했습니다. 다시 시도해주세요.");
-          navigate("/", { replace: true });
+          navigate("/products", { replace: true });
         }
       });
   }, [id, navigate]);
@@ -79,10 +80,30 @@ export default function ProductDetail() {
     }
   };
 
+  const handlePurchase = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('로그인이 필요합니다.');
+      navigate('/login');
+      return;
+    }
+    try {
+      await axios.post(`/products/${id}/purchase`, { quantity }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert('구매 완료');
+      setProduct({ ...product, tokenSupply: product.tokenSupply - quantity });
+    } catch (err) {
+      alert(err.response?.data?.error || '구매 실패');
+    }
+  };
+
+
   const images = Array.isArray(product.images) ? product.images : [];
 
   return (
-    <div className="product-detail-container">
+    <div className="product-detail-page">
+      <div className="product-detail-container">
       <div className="product-detail-images">
         <div className="thumbnail-list">
           {images.map((img, idx) => (
@@ -112,24 +133,51 @@ export default function ProductDetail() {
       </div>
 
       <div className="product-detail-info">
-        <h1>{product.title}</h1>
+        <div className="product-detail-header">
+          <h1>{product.title}</h1>
+          {isOwner && (
+            <div className="detail-actions">
+              <button className="edit-btn" onClick={handleEdit}>
+                수정하기
+              </button>
+              <button className="delete-btn" onClick={handleDelete}>
+                삭제하기
+              </button>
+            </div>
+          )}
+        </div>
         <p className="location">
           {product.location?.sido} {product.location?.gugun}
         </p>
-        <p>{product.description}</p>
+    
         <p className="price">{product.price.toLocaleString()}원</p>
-
-        {isOwner && (
-          <div className="detail-actions">
-            <button className="edit-btn" onClick={handleEdit}>
-              수정하기
-            </button>
-            <button className="delete-btn" onClick={handleDelete}>
-              삭제하기
-            </button>
+{product.tokenSupply > 0 && (
+          <div className="token-purchase">
+            <label>
+              수량:
+              <input
+                type="number"
+                min="1"
+                max={product.tokenSupply}
+                value={quantity}
+                onChange={(e) => setQuantity(parseInt(e.target.value, 10) || 1)}
+              />
+            </label>
+            <p>
+              토큰 가격: {product.tokenPrice.toLocaleString()}원 | 총액:{" "}
+              {(product.tokenPrice * quantity).toLocaleString()}원
+            </p>
+            <button onClick={handlePurchase}>구매하기</button>
           </div>
+        )}
+        {!isOwner && (
+          <button className="buy-btn">구매하기</button>
         )}
       </div>
     </div>
+    <div className="product-description-section">
+      <p>{product.description}</p>
+    </div>
+  </div>
   );
 }

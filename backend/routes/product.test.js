@@ -4,11 +4,15 @@ const express = require('express');
 jest.mock('../model/Product');
 const Product = require('../model/Product');
 
+jest.mock('../model/Purchase');
+const Purchase = require('../model/Purchase');
+
 jest.mock('../middleware/auth', () => (req, res, next) => { req.user = { id: 'user1' }; next(); });
 
 const router = require('./product');
 
 const app = express();
+app.use(express.json());
 app.use('/', router);
 
 describe('product update', () => {
@@ -29,5 +33,39 @@ describe('product update', () => {
       expect.objectContaining({ images: ['a.jpg'] }),
       { new: true }
     );
+  });
+  });
+
+describe('purchase route', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test('POST /:id/purchase deducts supply and records purchase', async () => {
+    const product = { _id: '1', tokenSupply: 5, save: jest.fn().mockResolvedValue(true) };
+    Product.findById.mockResolvedValue(product);
+    const savePurchase = jest.fn().mockResolvedValue(true);
+    Purchase.mockImplementation(() => ({ save: savePurchase }));
+
+    const res = await request(app).post('/1/purchase').send({ quantity: 3 });
+
+    expect(res.statusCode).toBe(200);
+    expect(product.tokenSupply).toBe(2);
+    expect(Purchase).toHaveBeenCalledWith({
+      userId: 'user1',
+      productId: '1',
+      quantity: 3
+    });
+    expect(savePurchase).toHaveBeenCalled();
+  });
+
+  test('POST /:id/purchase with insufficient supply returns 400', async () => {
+    const product = { _id: '1', tokenSupply: 2, save: jest.fn() };
+    Product.findById.mockResolvedValue(product);
+
+    const res = await request(app).post('/1/purchase').send({ quantity: 5 });
+
+    expect(res.statusCode).toBe(400);
+    expect(Purchase).not.toHaveBeenCalled();
   });
 });

@@ -4,6 +4,9 @@ const productSchema = new mongoose.Schema({
   title:           { type: String, required: true },
   description:     String,
   price:           { type: Number, required: true },
+  tokenSupply:     { type: Number, default: 0 },
+  tokenPrice:      { type: Number, default: 0 },
+  tokenCount:      { type: Number, min: 50, max: 10000, default: 100 },
   images:          [String],
   mainImageIndex:  { type: Number, default: 0 },
 

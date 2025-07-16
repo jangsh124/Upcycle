@@ -20,6 +20,7 @@ import ProductForm from "./pages/ProductForm";
 import MyPage from "./pages/Mypage";
 import MyProductsPage from "./pages/MyProductsPage";
 import ProductDetail from "./pages/ProductDetail";
+import Home from "./pages/Home";
 
 // ─── 아래 한 줄을 추가 ────────────────────────────────────
 // 모든 axios 요청의 기본 URL을 '/api'로 설정하면,
@@ -70,7 +71,8 @@ function AppContent({
         />
       )}
       <Routes>
-        <Route path="/" element={<ProductList userEmail={userEmail} />} />
+       <Route path="/" element={<Home />} />
+        <Route path="/products" element={<ProductList userEmail={userEmail} />} />
         <Route path="/product-form" element={<ProductForm />} />
         <Route
           path="/login"
@@ -101,8 +103,8 @@ function AppContent({
           element={userEmail ? <MyPage /> : <Navigate to="/login" replace />}
         />
 
-        {/* 기타: 전체 상품 목록 */}
-        <Route path="*" element={<ProductList userEmail={userEmail} />} />
+        {/* 기타: 홈페이지 */}
+        <Route path="*" element={<Home />} />
       </Routes>
     </>
   );

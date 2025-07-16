@@ -1,6 +1,7 @@
 // routes/product.js
 const express = require('express');
 const Product = require('../model/Product');
+const Purchase = require('../model/Purchase');
 const authMiddleware = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
@@ -77,12 +78,15 @@ router.get('/:id', async (req, res) => {
 // POST /api/products
 router.post('/', authMiddleware, upload.array('images', 5), async (req, res) => {
   try {
-    const { title, description, price, location } = req.body;
+    const { title, description, price, location, tokenCount, tokenSupply, tokenPrice } = req.body;
     const imageFiles = req.files.map(f => f.filename);
     const newProduct = new Product({
       title,
       description,
       price,
+      tokenSupply,
+      tokenPrice,
+      tokenCount: parseInt(tokenCount, 10) || 100,
       location: JSON.parse(location || '{}'),
       images: imageFiles,
       sellerId: req.user.id,
@@ -109,6 +113,10 @@ router.patch('/:id', authMiddleware, upload.array('images', 5), async (req, res)
       }
     }
 
+    if (updates.tokenCount !== undefined) {
+      updates.tokenCount = parseInt(updates.tokenCount, 10);
+    }
+
     let existingImages = [];
     if (updates.existingImages) {
       try {
@@ -133,6 +141,39 @@ router.patch('/:id', authMiddleware, upload.array('images', 5), async (req, res)
   } catch (err) {
     console.error(err);
     res.status(400).json({ error: 'Failed to update product' });
+  }
+});
+
+// ───────────── 토큰 구매 ─────────────
+// POST /api/products/:id/purchase { quantity }
+router.post('/:id/purchase', authMiddleware, async (req, res) => {
+  try {
+    const quantity = parseInt(req.body.quantity, 10);
+    if (!quantity || quantity <= 0) {
+      return res.status(400).json({ error: 'Invalid quantity' });
+    }
+
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ error: 'Product not found' });
+
+    if (product.tokenSupply < quantity) {
+      return res.status(400).json({ error: 'Not enough tokens available' });
+    }
+
+    product.tokenSupply -= quantity;
+    await product.save();
+
+    const purchase = new Purchase({
+      userId: req.user.id,
+      productId: product._id,
+      quantity
+    });
+    await purchase.save();
+
+    res.json({ message: 'Purchase successful', purchase });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 

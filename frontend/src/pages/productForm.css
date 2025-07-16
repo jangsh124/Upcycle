@@ -115,6 +115,7 @@
 .image-preview-item.main-selected img {
   border: 2px solid #2471e7;
 }
+
 .main-badge {
   position: absolute;
   top: 4px;
@@ -147,4 +148,30 @@
   font-size: 14px;
   color: red;
   text-align: center;
+}
+
+/* ── 토큰 수량 슬라이더 및 입력 */
+.token-count-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.token-count-container input[type="range"] {
+  flex: 1;
+}
+.token-count-input {
+  width: 80px;
+  padding: 6px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+.token-price-info {
+  text-align: right;
+  margin-top: -8px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+  color: #555;
 }

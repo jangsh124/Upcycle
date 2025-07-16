@@ -15,6 +15,7 @@ export default function ProductForm() {
   const [title, setTitle] = useState("");
   const [description, setDesc] = useState("");
   const [price, setPrice] = useState("");
+  const [tokenCount, setTokenCount] = useState(100);
   const [sido, setSido] = useState("");
   const [gugun, setGugun] = useState("");
   const [existingImages, setExistingImages] = useState([]);
@@ -41,6 +42,7 @@ export default function ProductForm() {
         setTitle(p.title || "");
         setDesc(p.description || "");
         setPrice(p.price || "");
+        setTokenCount(p.tokenCount || 100);
         setSido(p.location?.sido || "");
         setGugun(p.location?.gugun || "");
         setMainImageIndex(p.mainImageIndex ?? 0);
@@ -87,6 +89,7 @@ export default function ProductForm() {
     formData.append("title", title);
     formData.append("description", description);
     formData.append("price", price);
+    formData.append("tokenCount", tokenCount);
 // 변경: location 단일 키로 JSON 문자열을 전송
      formData.append("location", JSON.stringify({ sido, gugun }));
     formData.append("mainImageIndex", mainImageIndex);
@@ -109,7 +112,7 @@ export default function ProductForm() {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setMsg("상품이 성공적으로 등록되었습니다!");
-        setTimeout(() => navigate("/"), 1000);
+        setTimeout(() => navigate("/products"), 1000);
       }
     } catch (err) {
       setMsg("전송에 실패했습니다: " + (err.response?.data?.error || err.message));
@@ -169,6 +172,34 @@ export default function ProductForm() {
             required
           />
           <span className="price-unit">원</span>
+        </div>
+
+<div className="token-count-container">
+          <input
+            type="range"
+            min="50"
+            max="10000"
+            value={tokenCount}
+            onChange={e => setTokenCount(Number(e.target.value))}
+          />
+          <input
+            className="token-count-input"
+            type="number"
+            min="50"
+            max="10000"
+            value={tokenCount}
+            onChange={e => {
+              const v = Number(e.target.value);
+              if (!isNaN(v)) {
+                if (v < 50) setTokenCount(50);
+                else if (v > 10000) setTokenCount(10000);
+                else setTokenCount(v);
+              }
+            }}
+          />
+        </div>
+        <div className="token-price-info">
+          {price && tokenCount ? `코인 1개당 ${(price / tokenCount).toLocaleString()}원` : ''}
         </div>
 
         <input
