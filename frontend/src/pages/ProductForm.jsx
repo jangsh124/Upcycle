@@ -16,8 +16,6 @@ export default function ProductForm() {
   const [description, setDesc] = useState("");
   const [price, setPrice] = useState("");
   const [tokenCount, setTokenCount] = useState(100);
-  const [tokenSupply, setTokenSupply] = useState(100);
-  const [tokenPrice, setTokenPrice] = useState(0);
   const [sido, setSido] = useState("");
   const [gugun, setGugun] = useState("");
   const [existingImages, setExistingImages] = useState([]);
@@ -45,8 +43,6 @@ export default function ProductForm() {
         setDesc(p.description || "");
         setPrice(p.price || "");
         setTokenCount(p.tokenCount || 100);
-        setTokenSupply(p.tokenSupply || p.tokenCount || 100);
-        setTokenPrice(p.tokenPrice || Math.round((p.price || 0) / (p.tokenCount || 1)));
         setSido(p.location?.sido || "");
         setGugun(p.location?.gugun || "");
         setMainImageIndex(p.mainImageIndex ?? 0);

@@ -67,5 +67,35 @@ describe('purchase route', () => {
 
     expect(res.statusCode).toBe(400);
     expect(Purchase).not.toHaveBeenCalled();
+    });
+
+describe('legacy data handling', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test('GET /:id sets default tokenSupply and tokenPrice', async () => {
+    const product = { _id: '1', tokenCount: 10, price: 100 };
+    Product.findById.mockResolvedValue(product);
+
+    const res = await request(app).get('/1');
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.tokenSupply).toBe(10);
+    expect(res.body.tokenPrice).toBe(10);
+  });
+
+  test('POST /:id/purchase works when tokenSupply missing', async () => {
+    const product = { _id: '1', tokenCount: 5, save: jest.fn().mockResolvedValue(true) };
+    Product.findById.mockResolvedValue(product);
+    const savePurchase = jest.fn().mockResolvedValue(true);
+    Purchase.mockImplementation(() => ({ save: savePurchase }));
+
+    const res = await request(app).post('/1/purchase').send({ quantity: 2 });
+
+    expect(res.statusCode).toBe(200);
+    expect(product.tokenSupply).toBe(3);
+    expect(savePurchase).toHaveBeenCalled();
+  });
   });
 });

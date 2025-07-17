@@ -67,6 +67,17 @@ router.get('/:id', async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ error: 'Product not found' });
+    // 기존 데이터에는 tokenSupply/tokenPrice 값이 없을 수 있으므로 기본값을 설정
+    if (product.tokenSupply === undefined || product.tokenSupply === null) {
+      product.tokenSupply = product.tokenCount;
+    }
+    if (product.tokenPrice === undefined || product.tokenPrice === null) {
+      if (product.price && product.tokenCount) {
+        product.tokenPrice = Math.round(product.price / product.tokenCount);
+      } else {
+        product.tokenPrice = 0;
+      }
+    }
     res.json(product);
   } catch (err) {
     console.error(err);
@@ -155,6 +166,10 @@ router.post('/:id/purchase', authMiddleware, async (req, res) => {
 
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ error: 'Product not found' });
+    // tokenSupply 값이 없을 경우 tokenCount를 잔여 수량으로 간주
+    if (product.tokenSupply === undefined || product.tokenSupply === null) {
+      product.tokenSupply = product.tokenCount;
+    }
 
     if (product.tokenSupply < quantity) {
       return res.status(400).json({ error: 'Not enough tokens available' });

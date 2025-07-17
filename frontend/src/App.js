@@ -20,6 +20,7 @@ import ProductForm from "./pages/ProductForm";
 import MyPage from "./pages/Mypage";
 import MyProductsPage from "./pages/MyProductsPage";
 import ProductDetail from "./pages/ProductDetail";
+import Payment from "./pages/Payment";
 import Home from "./pages/Home";
 
 // ─── 아래 한 줄을 추가 ────────────────────────────────────
@@ -88,6 +89,7 @@ function AppContent({
           element={<ResetPassword setUserEmail={setUserEmail} />}
         />
         <Route path="/products/:id" element={<ProductDetail />} />
+        <Route path="/products/:id/payment" element={<Payment />} />
 
         {/* 내가 등록한 상품 전체보기 */}
         <Route

@@ -80,27 +80,13 @@ export default function ProductDetail() {
     }
   };
 
-  const handlePurchase = async (qty) => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      alert('로그인이 필요합니다.');
-      navigate('/login');
-      return;
-    }
-    try {
-      await axios.post(`/products/${id}/purchase`, { quantity: qty }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      alert('구매 완료');
-      setProduct({ ...product, tokenSupply: product.tokenSupply - qty });
-    } catch (err) {
-      alert(err.response?.data?.error || '구매 실패');
-    }
+  const handlePurchase = (qty) => {
+    navigate(`/payment/${id}?quantity=${qty}`);
   };
 
   const handleBuyAll = () => {
     if (product.tokenSupply > 0) {
-      handlePurchase(product.tokenSupply);
+      navigate(`/payment/${id}?quantity=${product.tokenSupply}`);
     }
   };
 

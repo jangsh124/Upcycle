@@ -54,6 +54,21 @@ router.patch(
   }
 );
 
+// 지갑 주소 업데이트
+router.patch('/wallet', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    user.walletAddress = req.body.walletAddress;
+    await user.save();
+
+    res.json({ walletAddress: user.walletAddress });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // 현재 로그인한 유저 정보 조회
 router.get("/me", authMiddleware, async (req, res) => {
   try {
