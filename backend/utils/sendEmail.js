@@ -11,7 +11,7 @@ const sendEmail = async ({ to, subject, text }) => {
   });
 
   await transporter.sendMail({
-    from: `"Upcycle Future" <${process.env.EMAIL_USER}>`,
+    from: `"TokenGallery" <${process.env.EMAIL_USER}>`,
     to,
     subject,
     text,

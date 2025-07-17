@@ -7,8 +7,8 @@ export default function Home() {
     <div className="home-container">
       <section className="hero">
         <div className="hero-content">
-          <h1>UpcycleFuture</h1>
-          <p>버려지는 자원을 새로운 가치로 바꾸는 마켓</p>
+          <h1>TokenGallery</h1>
+          <p>토큰으로 갤러리를 구매하다</p>
           <Link to="/products" className="hero-button">상품 보러가기</Link>
         </div>
       </section>

@@ -151,3 +151,27 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   white-space: pre-wrap;
 }
+
+.buy-all-section,
+.token-purchase {
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+.buy-all-section button,
+.token-purchase button {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background-color: #2471e7;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.buy-all-section button:hover,
+.token-purchase button:hover {
+  background-color: #1a5bc7;
+}

@@ -7,7 +7,7 @@ export default function NavBar({ userEmail, onLogout }) {
   return (
     <div className="navbar">
       <div className="navbar-left">
-        <Link to="/" className="navbar-logo">UpcycleFuture</Link>
+        <Link to="/" className="navbar-logo">TokenGallery</Link>
         <nav className="navbar-menu">
           <Link to="/" className="menu-link">홈</Link>
           <Link to="/products" className="menu-link">상품</Link>
