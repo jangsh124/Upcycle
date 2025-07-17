@@ -16,6 +16,8 @@ export default function ProductForm() {
   const [description, setDesc] = useState("");
   const [price, setPrice] = useState("");
   const [tokenCount, setTokenCount] = useState(100);
+  const [tokenSupply, setTokenSupply] = useState(100);
+  const [tokenPrice, setTokenPrice] = useState(0);
   const [sido, setSido] = useState("");
   const [gugun, setGugun] = useState("");
   const [existingImages, setExistingImages] = useState([]);
@@ -43,6 +45,8 @@ export default function ProductForm() {
         setDesc(p.description || "");
         setPrice(p.price || "");
         setTokenCount(p.tokenCount || 100);
+        setTokenSupply(p.tokenSupply || p.tokenCount || 100);
+        setTokenPrice(p.tokenPrice || Math.round((p.price || 0) / (p.tokenCount || 1)));
         setSido(p.location?.sido || "");
         setGugun(p.location?.gugun || "");
         setMainImageIndex(p.mainImageIndex ?? 0);
@@ -90,8 +94,12 @@ export default function ProductForm() {
     formData.append("description", description);
     formData.append("price", price);
     formData.append("tokenCount", tokenCount);
+    const supply = tokenCount;
+    const pricePerToken = Math.round(Number(price) / supply);
+    formData.append('tokenSupply', supply.toString());
+    formData.append('tokenPrice', pricePerToken.toString());
 // 변경: location 단일 키로 JSON 문자열을 전송
-     formData.append("location", JSON.stringify({ sido, gugun }));
+    formData.append("location", JSON.stringify({ sido, gugun }));
     formData.append("mainImageIndex", mainImageIndex);
     formData.append("existingImages", JSON.stringify(existingImages));
     newFiles.forEach(f => formData.append("images", f));
