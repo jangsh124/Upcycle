@@ -1,0 +1,103 @@
+.payment-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 40px;
+  padding: 60px 20px;
+  background: #f8f9fa;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.payment-left, .payment-summary {
+  background: #fff;
+  padding: 32px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 입력 필드 */
+.payment-left input {
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+/* 결제 버튼 */
+.payment-left .pay-button {
+  padding: 14px;
+  background: #1c7ed6;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.payment-left .pay-button:disabled {
+  background: #adb5bd;
+  cursor: not-allowed;
+}
+
+/* 크립토 아이콘 */
+.crypto-options {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.crypto-options img {
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.crypto-options img:hover {
+  transform: scale(1.1);
+}
+
+/* 주문 요약 */
+.payment-summary h3 {
+  margin-bottom: 12px;
+}
+
+.payment-summary p {
+  margin: 6px 0;
+  font-size: 15px;
+}
+
+.payment-summary .total-price {
+  font-size: 18px;
+  font-weight: bold;
+  margin-top: 12px;
+  border-top: 1px solid #ddd;
+  padding-top: 12px;
+}
+
+.money-back {
+  font-size: 13px;
+  color: #868e96;
+  margin-top: 12px;
+}
+
+.token-select {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 15px;
+  margin-bottom: 12px;
+}
+
+.payment-label {
+  margin-top: 10px;
+  font-weight: bold;
+  font-size: 14px;
+}

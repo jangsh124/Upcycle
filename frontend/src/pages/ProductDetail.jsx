@@ -81,12 +81,12 @@ export default function ProductDetail() {
   };
 
   const handlePurchase = (qty) => {
-    navigate(`/payment/${id}/payment?quantity=${qty}`);
+    navigate(`/products/${id}/payment?quantity=${qty}`);
   };
 
   const handleBuyAll = () => {
     if (product.tokenSupply > 0) {
-      navigate(`/payment/${id}/payment?quantity=${product.tokenSupply}`);
+      navigate(`/products/${id}/payment?quantity=${product.tokenSupply}`);
     }
   };
 
