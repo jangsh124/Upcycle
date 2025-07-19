@@ -1,0 +1,17 @@
+.order-book {
+  border-top: 1px solid #ddd;
+  margin-top: 20px;
+  padding-top: 20px;
+}
+.order-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.order-list {
+  margin-bottom: 15px;
+}
+.order-list ul {
+  list-style: none;
+  padding: 0;
+}

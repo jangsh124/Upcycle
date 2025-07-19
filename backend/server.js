@@ -18,22 +18,33 @@ app.use((req, res, next) => {
   next();
 });
 
-// DB 연결
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-}).then(() => console.log('✅ MongoDB Atlas connected'))
-  .catch(err => console.error('❌ MongoDB connection error:', err));
+// DB 연결 후 서버 시작
+async function startServer() {
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log('✅ MongoDB Atlas connected');
+
+    const PORT = process.env.PORT || 5001;
+    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+  } catch (err) {
+    console.error('❌ MongoDB connection error:', err);
+    process.exit(1);
+  }
+}
 
 // 라우터 불러오기
 const authRoutes = require('./routes/auth');
 const productRoutes = require('./routes/product');
 const userRoutes = require('./routes/user');
+const daoRoutes = require('./routes/dao');
+const orderRoutes = require('./routes/order');
 
 // 라우터 등록
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/dao', daoRoutes);
+app.use('/api/orders', orderRoutes);
 
 app.get('/', (req, res) => {
   res.send('Server is running!');
@@ -65,5 +76,4 @@ app.get('/test-email', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 5001;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+startServer();

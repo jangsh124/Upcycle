@@ -7,6 +7,7 @@ const productSchema = new mongoose.Schema({
   tokenSupply:     { type: Number, default: 0 },
   tokenPrice:      { type: Number, default: 0 },
   tokenCount:      { type: Number, min: 50, max: 10000, default: 100 },
+  status:          { type: String, enum: ['available', 'proposal', 'sold'], default: 'available' },
   images:          [String],
   mainImageIndex:  { type: Number, default: 0 },
 

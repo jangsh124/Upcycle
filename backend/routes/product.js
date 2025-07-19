@@ -90,14 +90,21 @@ router.get('/:id', async (req, res) => {
 router.post('/', authMiddleware, upload.array('images', 5), async (req, res) => {
   try {
     const { title, description, price, location, tokenCount, tokenSupply, tokenPrice } = req.body;
+    const parsedCount = parseInt(tokenCount, 10) || 100;
+    const parsedSupply = tokenSupply !== undefined ? parseInt(tokenSupply, 10) : parsedCount;
+
+    if (parsedSupply < parsedCount * 0.35) {
+      return res.status(400).json({ error: 'tokenSupply must be at least 35% of tokenCount' });
+    }
+
     const imageFiles = req.files.map(f => f.filename);
     const newProduct = new Product({
       title,
       description,
       price,
-      tokenSupply,
+      tokenSupply: parsedSupply,
       tokenPrice,
-      tokenCount: parseInt(tokenCount, 10) || 100,
+      tokenCount: parsedCount,
       location: JSON.parse(location || '{}'),
       images: imageFiles,
       sellerId: req.user.id,

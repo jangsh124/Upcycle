@@ -15,6 +15,7 @@ id_rsa.*
 build/
 dist/
 coverage/
+backend/uploads/
 
 # Logs
 npm-debug.log*

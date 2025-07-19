@@ -98,4 +98,42 @@ describe('legacy data handling', () => {
     expect(savePurchase).toHaveBeenCalled();
   });
   });
+  });
+
+describe('product creation', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test('POST / with insufficient tokenSupply returns 400', async () => {
+    Product.mockImplementation(() => ({ save: jest.fn() }));
+
+    const res = await request(app)
+      .post('/')
+      .field('title', 'test')
+      .field('price', '100')
+      .field('tokenCount', '100')
+      .field('tokenSupply', '20')
+      .field('location', JSON.stringify({ sido: 's', gugun: 'g' }));
+
+    expect(res.statusCode).toBe(400);
+    expect(Product).not.toHaveBeenCalled();
+  });
+
+  test('POST / succeeds when tokenSupply meets minimum', async () => {
+    const save = jest.fn().mockResolvedValue(true);
+    Product.mockImplementation(data => ({ ...data, save }));
+
+    const res = await request(app)
+      .post('/')
+      .field('title', 'ok')
+      .field('price', '100')
+      .field('tokenCount', '100')
+      .field('tokenSupply', '50')
+      .field('location', JSON.stringify({ sido: 's', gugun: 'g' }));
+
+    expect(res.statusCode).toBe(201);
+    expect(save).toHaveBeenCalled();
+    expect(Product).toHaveBeenCalledWith(expect.objectContaining({ tokenSupply: 50, tokenCount: 100 }));
+  });
 });

@@ -4,6 +4,7 @@ import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import "./ProductDetail.css";
 import getImageUrl from "../utils/getImageUrl";
+import OrderBook from "../components/OrderBook";
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -183,6 +184,7 @@ export default function ProductDetail() {
     <div className="product-description-section">
       <p>{product.description}</p>
     </div>
+    <OrderBook productId={id} />
   </div>
   );
 }
