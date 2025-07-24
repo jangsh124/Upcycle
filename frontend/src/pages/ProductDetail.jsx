@@ -13,7 +13,8 @@ export default function ProductDetail() {
   const [product, setProduct] = useState(null);
   const [mainImageIndex, setMainImageIndex] = useState(0);
   const [user, setUser] = useState(null);
-  const [quantity, setQuantity] = useState(1);
+  const [purchaseQuantity, setPurchaseQuantity] = useState(1);
+  const [purchased, setPurchased] = useState(0);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -50,6 +51,15 @@ export default function ProductDetail() {
           navigate("/products", { replace: true });
         }
       });
+
+    // fetch purchased amount if endpoint available
+    axios
+      .get(`/products/${id}/purchased`)
+      .then(res => {
+        const amt = res.data.purchased ?? 0;
+        setPurchased(amt);
+      })
+      .catch(() => setPurchased(0));
   }, [id, navigate]);
 
   if (!product) {
@@ -81,8 +91,28 @@ export default function ProductDetail() {
     }
   };
 
-  const handlePurchase = (qty) => {
-    navigate(`/products/${id}/payment?quantity=${qty}`);
+  const handlePurchase = async () => {
+    if (purchaseQuantity < 1 || purchaseQuantity > remainingQuantity) return;
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("로그인이 필요합니다.");
+        navigate("/login");
+        return;
+      }
+      await axios.post(
+        "/api/purchase",
+        {
+          productId: id,
+          quantity: purchaseQuantity,
+          unitPrice: product.unitPrice,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert("구매 완료");
+    } catch (err) {
+      alert(err.response?.data?.error || "구매 실패");
+    }
   };
 
   const handleBuyAll = () => {
@@ -91,7 +121,11 @@ export default function ProductDetail() {
     }
   };
 
-
+const remainingQuantity = (product.shareQuantity || 0) - purchased;
+  const remainingPct = product.shareQuantity
+    ? Math.round((remainingQuantity / product.shareQuantity) * 100)
+    : 0;
+  const totalCost = purchaseQuantity * (product.unitPrice || 0);
 
   const images = Array.isArray(product.images) ? product.images : [];
 
@@ -144,39 +178,51 @@ export default function ProductDetail() {
           {product.location?.sido} {product.location?.gugun}
         </p>
     
-        <p className="price">{product.price.toLocaleString()}원</p>
-{!isOwner && product.tokenSupply > 0 && (
+       <p className="price">{product.price.toLocaleString()}원</p>
+ {!isOwner && remainingQuantity > 0 && (
           <div className="buy-all-section">
             <p>전체 구매 시 총액: {product.price.toLocaleString()}원</p>
             <button className="buy-btn" onClick={handleBuyAll}>전체 매수</button>
           </div>
         )}
-        {product.tokenSupply > 0 && (
+       {remainingQuantity > 0 && (
           <div className="token-purchase">
+            {/* ➊ 잔여 % 게이지 */}
+    <div className="remaining-gauge-container">
+      <div
+        className="remaining-gauge-fill"
+        style={{ width: `${remainingPct}%` }}
+      />
+    </div>
+    <p className="remaining-info">
+      남은 토큰: {remainingQuantity}개 ({remainingPct}%)
+    </p>
+
+    {/* ➋ 개당 가격 표시 */}
+    <p className="unit-price">
+      토큰 개당 가격: {product.unitPrice.toLocaleString()}원
+    </p>
+
             <label>
               수량:
               <input
                 type="number"
                 min="1"
-                max={product.tokenSupply}
-                value={quantity}
-                onChange={(e) => {
-                  const v = parseInt(e.target.value, 10);
-                  if (!isNaN(v)) {
-                    if (v < 1) setQuantity(1);
-                    else if (v > product.tokenSupply) setQuantity(product.tokenSupply);
-                    else setQuantity(v);
-                  } else {
-                    setQuantity(1);
-                  }
-                }}
+                max={remainingQuantity}
+                value={purchaseQuantity}
+                onChange={e =>
+                  setPurchaseQuantity(Math.min(parseInt(e.target.value, 10) || 0, remainingQuantity))
+                }
               />
             </label>
-            <p>
-              토큰 가격: {product.tokenPrice.toLocaleString()}원 | 총액:{" "}
-              {(product.tokenPrice * quantity).toLocaleString()}원
-            </p>
-            <button onClick={() => handlePurchase(quantity)}>구매하기</button>
+           <small>You can buy up to {remainingQuantity} tokens</small>
+            <div>Total: {totalCost.toLocaleString()}원</div>
+            <button
+              onClick={handlePurchase}
+              disabled={purchaseQuantity < 1 || purchaseQuantity > remainingQuantity}
+            >
+              구매하기
+            </button>
           </div>
         )}
       </div>
