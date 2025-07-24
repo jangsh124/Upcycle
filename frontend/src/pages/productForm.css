@@ -175,3 +175,8 @@
   font-size: 0.9rem;
   color: #555;
 }
+
+/* share percentage select */
+.share-percentage-container {
+  margin-bottom: 12px;
+}

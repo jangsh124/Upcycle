@@ -89,10 +89,13 @@ router.get('/:id', async (req, res) => {
 // POST /api/products
 router.post('/', authMiddleware, upload.array('images', 5), async (req, res) => {
   try {
-    const { title, description, price, location, tokenCount, tokenSupply, tokenPrice } = req.body;
+    const { title, description, price, location, tokenCount, tokenSupply, tokenPrice,
+            sharePercentage, shareQuantity, unitPrice } = req.body;
     const parsedCount = parseInt(tokenCount, 10) || 100;
     const parsedSupply = tokenSupply !== undefined ? parseInt(tokenSupply, 10) : parsedCount;
-
+    const parsedSharePercentage = sharePercentage !== undefined ? parseFloat(sharePercentage) : 0;
+    const parsedShareQuantity   = shareQuantity !== undefined ? parseFloat(shareQuantity)   : 0;
+    const parsedUnitPrice       = unitPrice !== undefined ? parseFloat(unitPrice)       : 0;
     if (parsedSupply < parsedCount * 0.35) {
       return res.status(400).json({ error: 'tokenSupply must be at least 35% of tokenCount' });
     }
@@ -106,6 +109,9 @@ router.post('/', authMiddleware, upload.array('images', 5), async (req, res) => 
       tokenPrice,
       tokenCount: parsedCount,
       location: JSON.parse(location || '{}'),
+      sharePercentage: parsedSharePercentage,
+      shareQuantity:   parsedShareQuantity,
+      unitPrice:       parsedUnitPrice,
       images: imageFiles,
       sellerId: req.user.id,
     });
@@ -133,6 +139,16 @@ router.patch('/:id', authMiddleware, upload.array('images', 5), async (req, res)
 
     if (updates.tokenCount !== undefined) {
       updates.tokenCount = parseInt(updates.tokenCount, 10);
+    }
+
+    if (updates.sharePercentage !== undefined) {
+      updates.sharePercentage = parseFloat(updates.sharePercentage);
+    }
+    if (updates.shareQuantity !== undefined) {
+      updates.shareQuantity = parseFloat(updates.shareQuantity);
+    }
+    if (updates.unitPrice !== undefined) {
+      updates.unitPrice = parseFloat(updates.unitPrice);
     }
 
     let existingImages = [];

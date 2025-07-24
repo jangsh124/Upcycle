@@ -34,6 +34,25 @@ describe('product update', () => {
       { new: true }
     );
   });
+
+  test('PATCH /:id updates share fields', async () => {
+    Product.findByIdAndUpdate.mockResolvedValue({ id: '1' });
+
+    const res = await request(app)
+      .patch('/1')
+      .send({ sharePercentage: '10', shareQuantity: '5', unitPrice: '2' });
+
+    expect(res.statusCode).toBe(200);
+    expect(Product.findByIdAndUpdate).toHaveBeenCalledWith(
+      '1',
+      expect.objectContaining({
+        sharePercentage: 10,
+        shareQuantity: 5,
+        unitPrice: 2,
+      }),
+      { new: true }
+    );
+  });
   });
 
 describe('purchase route', () => {
@@ -130,10 +149,21 @@ describe('product creation', () => {
       .field('price', '100')
       .field('tokenCount', '100')
       .field('tokenSupply', '50')
+      .field('sharePercentage', '10')
+      .field('shareQuantity', '5')
+      .field('unitPrice', '2')
       .field('location', JSON.stringify({ sido: 's', gugun: 'g' }));
 
     expect(res.statusCode).toBe(201);
     expect(save).toHaveBeenCalled();
-    expect(Product).toHaveBeenCalledWith(expect.objectContaining({ tokenSupply: 50, tokenCount: 100 }));
+    expect(Product).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tokenSupply: 50,
+        tokenCount: 100,
+        sharePercentage: 10,
+        shareQuantity: 5,
+        unitPrice: 2,
+      })
+    );
   });
 });

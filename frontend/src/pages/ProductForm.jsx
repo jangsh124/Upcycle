@@ -16,6 +16,7 @@ export default function ProductForm() {
   const [description, setDesc] = useState("");
   const [price, setPrice] = useState("");
   const [tokenCount, setTokenCount] = useState(100);
+  const [sharePercentage, setSharePercentage] = useState(30);
   const [sido, setSido] = useState("");
   const [gugun, setGugun] = useState("");
   const [existingImages, setExistingImages] = useState([]);
@@ -43,6 +44,9 @@ export default function ProductForm() {
         setDesc(p.description || "");
         setPrice(p.price || "");
         setTokenCount(p.tokenCount || 100);
+        if (p.sharePercentage !== undefined) {
+          setSharePercentage(p.sharePercentage);
+        }
         setSido(p.location?.sido || "");
         setGugun(p.location?.gugun || "");
         setMainImageIndex(p.mainImageIndex ?? 0);
@@ -94,6 +98,7 @@ export default function ProductForm() {
     const pricePerToken = Math.round(Number(price) / supply);
     formData.append('tokenSupply', supply.toString());
     formData.append('tokenPrice', pricePerToken.toString());
+    formData.append('sharePercentage', sharePercentage.toString());
 // 변경: location 단일 키로 JSON 문자열을 전송
     formData.append("location", JSON.stringify({ sido, gugun }));
     formData.append("mainImageIndex", mainImageIndex);
@@ -204,6 +209,21 @@ export default function ProductForm() {
         </div>
         <div className="token-price-info">
           {price && tokenCount ? `코인 1개당 ${(price / tokenCount).toLocaleString()}원` : ''}
+        </div>
+
+        <div className="share-percentage-container">
+          <label>
+            Select percentage of total ownership to sell
+            <select
+              value={sharePercentage}
+              onChange={e => setSharePercentage(Number(e.target.value))}
+            >
+              {Array.from({ length: 20 }, (_, i) => 30 + i).map(v => (
+                <option key={v} value={v}>{v}%</option>
+              ))}
+              <option value={100}>100%</option>
+            </select>
+          </label>
         </div>
 
         <input
