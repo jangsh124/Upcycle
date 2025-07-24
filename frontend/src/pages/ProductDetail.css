@@ -1,9 +1,13 @@
+/* ── src/pages/ProductDetail.css ── */
+
+/* 페이지 전체 레이아웃 */
 .product-detail-page {
   max-width: 900px;
   margin: 40px auto;
 }
 
-.product-detail-cotainer {
+/* 메인 컨테이너: 이미지 + 정보 */
+.product-detail-container {
   display: flex;
   gap: 30px;
   padding: 20px;
@@ -14,6 +18,7 @@
   margin-bottom: 20px;
 }
 
+/* 이미지 섹션 */
 .product-detail-images {
   display: flex;
   gap: 20px;
@@ -54,14 +59,14 @@
   border-radius: 6px;
 }
 
+/* 상품 정보 섹션 */
 .product-detail-info {
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding-left: 20px; /* 사진과 정보 사이 간격 조금 더 추가 */
+  padding-left: 20px; /* 사진과 정보 사이 간격 추가 */
 }
-
 
 .product-detail-info .price {
   font-size: 20px;
@@ -73,13 +78,13 @@
   font-size: 28px;
   margin-bottom: 20px;
   white-space: normal;
-  word-break: break-word;     /* 아주 긴 단어/숫자도 다음줄로 넘어가게 */
+  word-break: break-word; /* 아주 긴 단어/숫자도 다음 줄로 넘어가게 */
 }
 
 .product-detail-info p {
   font-size: 16px;
   margin-bottom: 16px;
-  white-space: pre-wrap;      /* 줄바꿈+스페이스 보존, 자동 줄바꿈 */
+  white-space: pre-wrap; /* 줄바꿈+스페이스 보존, 자동 줄바꿈 */
   word-break: break-word;
 }
 
@@ -89,6 +94,7 @@
   margin: 0.5rem 0;
 }
 
+/* 제목과 버튼 정렬 */
 .product-detail-header {
   display: flex;
   align-items: center;
@@ -128,31 +134,29 @@
   background-color: #c0392b;
 }
 
-.buy-btn {
-  margin-top: 24px;
-  padding: 10px 16px;
+/* 전체 매수 버튼 */
+.buy-all-section {
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+.buy-all-section button {
+  margin-top: 8px;
+  padding: 8px 12px;
   background-color: #2471e7;
   color: #fff;
   border: none;
   border-radius: 6px;
-  font-size: 16px;
   cursor: pointer;
 }
 
-.buy-btn:hover {
+.buy-all-section button:hover {
   background-color: #1a5bc7;
 }
 
-
-.product-description-section {
-  padding: 20px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  white-space: pre-wrap;
-}
-
-.buy-all-section,
+/* 수량 지정 매수 섹션 */
 .token-purchase {
   margin-top: 16px;
   padding: 12px;
@@ -160,7 +164,6 @@
   border-radius: 6px;
 }
 
-.buy-all-section button,
 .token-purchase button {
   margin-top: 8px;
   padding: 8px 12px;
@@ -171,11 +174,9 @@
   cursor: pointer;
 }
 
-.buy-all-section button:hover,
 .token-purchase button:hover {
   background-color: #1a5bc7;
 }
-
 
 /* 잔여 % 게이지 바 컨테이너 */
 .remaining-gauge-container {
@@ -186,20 +187,44 @@
   overflow: hidden;
   margin: 8px 0;
 }
-/* 채워진 부분 */
+
+/* 게이지 바 채워진 부분 */
 .remaining-gauge-fill {
   height: 100%;
   background-color: #2471e7;
   transition: width 0.3s ease;
 }
-/* 설명 텍스트 */
+
+/* 잔여 정보 텍스트 */
 .remaining-info {
   margin: 4px 0 12px;
   font-size: 0.9rem;
   color: #555;
 }
+
 /* 개당 가격 텍스트 */
 .unit-price {
   margin-bottom: 12px;
   font-weight: 500;
+}
+
+/* standalone purchase widget */
+.standalone-purchase-widget {
+  margin: 20px 0;
+  padding: 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.standalone-purchase-widget h4 {
+  margin-bottom: 12px;
+}
+
+/* 프로덕트 설명 섹션 */
+.product-description-section {
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  white-space: pre-wrap;
 }
