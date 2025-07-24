@@ -183,4 +183,12 @@
 /* share percentage select */
 .share-percentage-container {
   margin-bottom: 12px;
+
+}
+
+.helper-text {
+  font-size: 0.8rem;
+  color: red;
+  margin-top: -8px;
+  margin-bottom: 8px;
 }

@@ -17,7 +17,7 @@ export default function ProductForm() {
   const [price, setPrice] = useState("");
   const [tokenCount, setTokenCount] = useState(100);
   const [sharePercentage, setSharePercentage] = useState(30);
-  const [shareQuantity, setShareQuantity] = useState(0);
+  const [splitQuantity, setSplitQuantity] = useState(1);
   const [unitPrice, setUnitPrice] = useState(0);
   const [sido, setSido] = useState("");
   const [gugun, setGugun] = useState("");
@@ -25,6 +25,10 @@ export default function ProductForm() {
   const [newFiles, setNewFiles] = useState([]);
   const [mainImageIndex, setMainImageIndex] = useState(0);
   const [msg, setMsg] = useState("");
+  const sharePctValid =
+    (sharePercentage >= 30 && sharePercentage <= 49) || sharePercentage === 100;
+  const splitQtyValid = splitQuantity >= 1 && splitQuantity <= 10000;
+  const formValid = sharePctValid && splitQtyValid;
   const getFileInfoText = () => {
     const parts = [];
     if (newFiles.length) parts.push(newFiles.map(f => f.name).join(', '));
@@ -34,12 +38,12 @@ export default function ProductForm() {
 
   useEffect(() => {
     const p = parseFloat(price) || 0;
-    const qty = parseInt(shareQuantity, 10) || 1;
+    const qty = parseInt(splitQuantity, 10) || 1;
     const pct = parseFloat(sharePercentage) / 100 || 0;
     const totalSale = p * pct;
     const up = qty > 0 ? Math.floor(totalSale / qty) : 0;
     setUnitPrice(up);
-  }, [price, shareQuantity, sharePercentage]);
+  }, [price, splitQuantity, sharePercentage]);
   // 수정 모드면 기존 값 불러오기
   useEffect(() => {
     if (!editId) return;
@@ -57,8 +61,10 @@ export default function ProductForm() {
         if (p.sharePercentage !== undefined) {
           setSharePercentage(p.sharePercentage);
         }
-        if (p.shareQuantity !== undefined) {
-          setShareQuantity(p.shareQuantity);
+        if (p.splitQuantity !== undefined) {
+          setSplitQuantity(p.splitQuantity);
+        } else if (p.shareQuantity !== undefined) {
+          setSplitQuantity(p.shareQuantity);
         }
         if (p.unitPrice !== undefined) {
           setUnitPrice(p.unitPrice);
@@ -104,6 +110,14 @@ export default function ProductForm() {
     if (!sido || !gugun) {
       setMsg("지역을 선택해주세요."); return;
     }
+    if (!sharePctValid) {
+      setMsg("판매 비율은 30-49% 또는 100%만 가능합니다.");
+      return;
+    }
+    if (!splitQtyValid) {
+      setMsg("판매 수량은 1~10000 사이여야 합니다.");
+      return;
+    }
 
     const formData = new FormData();
     formData.append("title", title);
@@ -115,7 +129,7 @@ export default function ProductForm() {
     formData.append('tokenSupply', supply.toString());
     formData.append('tokenPrice', pricePerToken.toString());
     formData.append('sharePercentage', sharePercentage.toString());
-    formData.append('shareQuantity', shareQuantity.toString());
+    formData.append('splitQuantity', splitQuantity.toString());
     formData.append('unitPrice', unitPrice.toString());
 // 변경: location 단일 키로 JSON 문자열을 전송
     formData.append("location", JSON.stringify({ sido, gugun }));
@@ -201,44 +215,6 @@ export default function ProductForm() {
           <span className="price-unit">원</span>
         </div>
 
-<div className="token-count-container">
-          <input
-            type="range"
-            min="50"
-            max="10000"
-            value={tokenCount}
-            onChange={e => setTokenCount(Number(e.target.value))}
-          />
-          <input
-            className="token-count-input"
-            type="number"
-            min="50"
-            max="10000"
-            value={tokenCount}
-            onChange={e => {
-              const v = Number(e.target.value);
-              if (!isNaN(v)) {
-                if (v < 50) setTokenCount(50);
-                else if (v > 10000) setTokenCount(10000);
-                else setTokenCount(v);
-              }
-            }}
-          />
-        </div>
-        <div className="token-price-info">코인 1개당 {unitPrice.toLocaleString()}원</div>
-
-        <div className="share-quantity-container">
-          <label>
-            판매 수량
-            <input
-              type="number"
-              min="1"
-              value={shareQuantity}
-              onChange={e => setShareQuantity(e.target.value)}
-            />
-          </label>
-        </div>
-
         <div className="share-percentage-container">
           <label>
             Select percentage of total ownership to sell
@@ -252,6 +228,39 @@ export default function ProductForm() {
               <option value={100}>100%</option>
             </select>
           </label>
+          {!sharePctValid && (
+            <div className="helper-text">30~49% 또는 100%만 선택 가능합니다.</div>
+          )}
+        </div>
+
+        <div className="share-quantity-container">
+          <label>
+            판매 수량
+            <input
+              type="number"
+              min="1"
+              max="10000"
+              value={splitQuantity}
+              onChange={e => setSplitQuantity(e.target.value)}
+            />
+          </label>
+          {!splitQtyValid && (
+            <div className="helper-text">1~10000 사이의 값을 입력하세요.</div>
+          )}
+        </div>
+
+        <div className="token-price-info">Unit Price per Token: {unitPrice.toLocaleString()}원</div>
+
+
+<div className="token-count-container">
+          <input
+            type="range"
+            min="50"
+            max="10000"
+            value={tokenCount}
+            onChange={e => setTokenCount(Number(e.target.value))}
+          />
+          
         </div>
 
         <input
@@ -291,7 +300,7 @@ export default function ProductForm() {
           </div>
         )}
 
-        <button type="submit" className="form-submit-btn">
+        <button type="submit" className="form-submit-btn" disabled={!formValid}>
           {editId ? "수정 완료" : "등록 완료"}
         </button>
       </form>
