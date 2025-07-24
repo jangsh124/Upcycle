@@ -175,6 +175,10 @@
   font-size: 0.9rem;
   color: #555;
 }
+/* share quantity input */
+.share-quantity-container {
+  margin-bottom: 12px;
+}
 
 /* share percentage select */
 .share-percentage-container {

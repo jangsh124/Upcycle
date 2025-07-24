@@ -17,6 +17,8 @@ export default function ProductForm() {
   const [price, setPrice] = useState("");
   const [tokenCount, setTokenCount] = useState(100);
   const [sharePercentage, setSharePercentage] = useState(30);
+  const [shareQuantity, setShareQuantity] = useState(0);
+  const [unitPrice, setUnitPrice] = useState(0);
   const [sido, setSido] = useState("");
   const [gugun, setGugun] = useState("");
   const [existingImages, setExistingImages] = useState([]);
@@ -30,6 +32,14 @@ export default function ProductForm() {
     return parts.length ? parts.join(', ') : '선택된 파일이 없습니다.';
   };
 
+  useEffect(() => {
+    const p = parseFloat(price) || 0;
+    const qty = parseInt(shareQuantity, 10) || 1;
+    const pct = parseFloat(sharePercentage) / 100 || 0;
+    const totalSale = p * pct;
+    const up = qty > 0 ? Math.floor(totalSale / qty) : 0;
+    setUnitPrice(up);
+  }, [price, shareQuantity, sharePercentage]);
   // 수정 모드면 기존 값 불러오기
   useEffect(() => {
     if (!editId) return;
@@ -46,6 +56,12 @@ export default function ProductForm() {
         setTokenCount(p.tokenCount || 100);
         if (p.sharePercentage !== undefined) {
           setSharePercentage(p.sharePercentage);
+        }
+        if (p.shareQuantity !== undefined) {
+          setShareQuantity(p.shareQuantity);
+        }
+        if (p.unitPrice !== undefined) {
+          setUnitPrice(p.unitPrice);
         }
         setSido(p.location?.sido || "");
         setGugun(p.location?.gugun || "");
@@ -99,6 +115,8 @@ export default function ProductForm() {
     formData.append('tokenSupply', supply.toString());
     formData.append('tokenPrice', pricePerToken.toString());
     formData.append('sharePercentage', sharePercentage.toString());
+    formData.append('shareQuantity', shareQuantity.toString());
+    formData.append('unitPrice', unitPrice.toString());
 // 변경: location 단일 키로 JSON 문자열을 전송
     formData.append("location", JSON.stringify({ sido, gugun }));
     formData.append("mainImageIndex", mainImageIndex);
@@ -207,8 +225,18 @@ export default function ProductForm() {
             }}
           />
         </div>
-        <div className="token-price-info">
-          {price && tokenCount ? `코인 1개당 ${(price / tokenCount).toLocaleString()}원` : ''}
+        <div className="token-price-info">코인 1개당 {unitPrice.toLocaleString()}원</div>
+
+        <div className="share-quantity-container">
+          <label>
+            판매 수량
+            <input
+              type="number"
+              min="1"
+              value={shareQuantity}
+              onChange={e => setShareQuantity(e.target.value)}
+            />
+          </label>
         </div>
 
         <div className="share-percentage-container">
