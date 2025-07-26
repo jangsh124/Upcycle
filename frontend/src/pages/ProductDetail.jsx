@@ -53,7 +53,8 @@ export default function ProductDetail() {
   const isOwner = user && user._id.toString() === ownerId?.toString();
 
   // 토큰 전체 수량이 없으면 tokenSupply, shareQuantity, 1 중 하나로 처리
-  const totalQuantity = product.shareQuantity ?? product.tokenSupply ?? 1;
+  const totalQuantity =
+    product.shareQuantity || product.tokenSupply || 1;
   const remainingQuantity = totalQuantity - purchased;
   const remainingPct = totalQuantity
     ? Math.round((remainingQuantity / totalQuantity) * 100)
