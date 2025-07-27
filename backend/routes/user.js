@@ -3,12 +3,17 @@ const User = require('../model/User');
 const authMiddleware = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const router = express.Router();
 
 // 프로필 이미지 저장 경로 설정
 const profileStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/profiles/'); // 폴더 반드시 존재해야 함
+   const uploadPath = 'uploads/profiles/';
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + '-' + file.originalname);
@@ -30,6 +35,12 @@ router.patch(
       if (name) user.name = name;
       if (bio) user.bio = bio;
       if (req.file) {
+        if (user.profileImage) {
+          const currentPath = path.join(__dirname, '..', user.profileImage.replace(/^\//, ''));
+          if (fs.existsSync(currentPath)) {
+            try { fs.unlinkSync(currentPath); } catch (e) { console.error('파일 삭제 실패:', e); }
+          }
+        }
         user.profileImage = `/uploads/profiles/${req.file.filename}`;
       }
 

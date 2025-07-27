@@ -7,6 +7,7 @@ const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const multer = require('multer');
 const fs = require('fs');
+const path = require('path');
 
 const router = express.Router();
 
@@ -171,6 +172,14 @@ router.post('/upload-profile', authMiddleware, upload.single('profileImage'), as
     }
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
+
+    // 기존 이미지 삭제
+    if (user.profileImage) {
+      const currentPath = path.join(__dirname, '..', user.profileImage.replace(/^\//, ''));
+      if (fs.existsSync(currentPath)) {
+        try { fs.unlinkSync(currentPath); } catch (e) { console.error('파일 삭제 실패:', e); }
+      }
+    }
 
     // 프로필 이미지 경로 저장
     user.profileImage = `/uploads/profiles/${req.file.filename}`;

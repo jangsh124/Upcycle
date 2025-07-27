@@ -8,10 +8,16 @@ export default class OrderBook {
   // 서버에서 내려주는 전체 북 레벨로 덮어쓰기
   setBook({ buyOrders, sellOrders }) {
     this.bids = buyOrders
-      .map(o => ({ ...o, remaining: o.quantity - (o.filled||0) }))
+       .map(o => ({
+        ...o,
+        remaining: o.remaining ?? (o.quantity - (o.filled || 0)),
+      }))
       .sort((a, b) => b.price - a.price);
     this.asks = sellOrders
-      .map(o => ({ ...o, remaining: o.quantity - (o.filled||0) }))
+      .map(o => ({
+        ...o,
+        remaining: o.remaining ?? (o.quantity - (o.filled || 0)),
+      }))
       .sort((a, b) => a.price - b.price);
   }
 

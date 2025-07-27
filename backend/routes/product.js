@@ -1,5 +1,6 @@
 // routes/product.js
 const express = require('express');
+const fs = require('fs');
 const Product = require('../model/Product');
 const Purchase = require('../model/Purchase');
 const authMiddleware = require('../middleware/auth');
@@ -160,18 +161,29 @@ router.patch('/:id', authMiddleware, upload.array('images', 5), async (req, res)
       }
     }
     delete updates.existingImages;
-
   const uploadedImages = (req.files || []).map(f => f.filename);
 
-    updates.images = [...existingImages, ...uploadedImages];
-  
-    const updated = await Product.findByIdAndUpdate(
-      req.params.id,
-      updates,
-      { new: true }
-    );
-    if (!updated) return res.status(404).json({ error: 'Product not found' });
-    res.json(updated);
+    const product = await Product.findById(req.params.id);
+  if (!product) return res.status(404).json({ error: 'Product not found' });
+
+  const newImages = [...existingImages, ...uploadedImages];
+  const removedImages = (product.images || []).filter(img => !newImages.includes(img));
+  for (const img of removedImages) {
+    try {
+      await fs.promises.unlink(path.join(__dirname, '../uploads', img));
+    } catch (e) {}
+  }
+
+  updates.images = newImages;
+
+  const updated = await Product.findByIdAndUpdate(
+    req.params.id,
+    updates,
+    { new: true }
+  );
+  if (!updated) return res.status(404).json({ error: 'Product not found' });
+  res.json(updated);
+
   } catch (err) {
     console.error(err);
     res.status(400).json({ error: 'Failed to update product' });
@@ -219,8 +231,16 @@ router.post('/:id/purchase', authMiddleware, async (req, res) => {
 // DELETE /api/products/:id
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
-    const deleted = await Product.findByIdAndDelete(req.params.id);
-    if (!deleted) return res.status(404).json({ error: 'Product not found' });
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ error: 'Product not found' });
+
+    for (const img of product.images || []) {
+      try {
+        await fs.promises.unlink(path.join(__dirname, '../uploads', img));
+      } catch (e) {}
+    }
+
+    await Product.findByIdAndDelete(req.params.id);
     res.json({ message: 'Product deleted' });
   } catch (err) {
     console.error(err);

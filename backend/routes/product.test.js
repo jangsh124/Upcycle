@@ -1,5 +1,7 @@
 const request = require('supertest');
 const express = require('express');
+const fs = require("fs");
+jest.mock("fs");
 
 jest.mock('../model/Product');
 const Product = require('../model/Product');
@@ -18,6 +20,7 @@ app.use('/', router);
 describe('product update', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    fs.promises.unlink.mockResolvedValue();
   });
 
   test('PATCH /:id with existing images and no uploads uses provided list', async () => {
@@ -53,11 +56,23 @@ describe('product update', () => {
       { new: true }
     );
   });
+  test('PATCH /:id removes unused images', async () => {
+    const product = { images: ['a.jpg', 'b.jpg'] };
+    Product.findById.mockResolvedValue(product);
+    Product.findByIdAndUpdate.mockResolvedValue({ id: '1', images: ['a.jpg'] });
+    const res = await request(app)
+      .patch('/1')
+      .field('existingImages', JSON.stringify(['a.jpg']));
+
+    expect(res.statusCode).toBe(200);
+    expect(fs.promises.unlink).toHaveBeenCalledWith(expect.stringContaining('b.jpg'));
+  });
   });
 
 describe('purchase route', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    fs.promises.unlink.mockResolvedValue();
   });
 
   test('POST /:id/purchase deducts supply and records purchase', async () => {
@@ -91,6 +106,7 @@ describe('purchase route', () => {
 describe('legacy data handling', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    fs.promises.unlink.mockResolvedValue();
   });
 
   test('GET /:id sets default tokenSupply and tokenPrice', async () => {
@@ -119,9 +135,28 @@ describe('legacy data handling', () => {
   });
   });
 
+
+  describe('product deletion', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    fs.promises.unlink.mockResolvedValue();
+  });
+
+  test('DELETE /:id removes all images', async () => {
+    const product = { images: ['a.jpg', 'b.jpg'] };
+    Product.findById.mockResolvedValue(product);
+    Product.findByIdAndDelete.mockResolvedValue(true);
+
+    const res = await request(app).delete('/1');
+
+    expect(res.statusCode).toBe(200);
+    expect(fs.promises.unlink).toHaveBeenCalledTimes(2);
+  });
+});
 describe('product creation', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    fs.promises.unlink.mockResolvedValue();
   });
 
   test('POST / with insufficient tokenSupply returns 400', async () => {

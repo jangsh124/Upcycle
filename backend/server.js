@@ -12,7 +12,7 @@ const authRoutes    = require("./routes/auth");
 const productRoutes = require("./routes/product");
 const userRoutes    = require("./routes/user");
 const daoRoutes     = require("./routes/dao");
-const orderRoutes   = require("./routes/order");
+const orderRoutes   = require("./routes/orderRoutes");
 
 const app = express();
 

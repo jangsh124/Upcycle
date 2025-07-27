@@ -1,5 +1,5 @@
 // ── backend/services/orderBook.js ──
-const OrderModel = require('../models/Order');
+const OrderModel = require('../model/Order');
 
 class OrderBook {
   constructor() {

@@ -10,6 +10,7 @@ jest.mock('../middleware/auth', () => (req, res, next) => {
 });
 
 const router = require('./user');
+const fs = require('fs');
 
 const app = express();
 app.use(express.json());
@@ -41,5 +42,27 @@ describe('user wallet update', () => {
       .send({ walletAddress: '0xabc' });
 
     expect(res.statusCode).toBe(404);
+  });
+});
+
+describe('profile image replacement', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.spyOn(fs, 'existsSync').mockReturnValue(true);
+    jest.spyOn(fs, 'mkdirSync').mockImplementation(() => {});
+    jest.spyOn(fs, 'unlinkSync').mockImplementation(() => {});
+  });
+
+  test('PATCH /profile deletes previous image', async () => {
+    const save = jest.fn().mockResolvedValue(true);
+    User.findById.mockResolvedValue({ profileImage: '/uploads/profiles/old.jpg', save, email: 'a@a.com', walletAddress: '0x1', name: '', bio: '', _id: 'u1' });
+
+    const res = await request(app)
+      .patch('/profile')
+      .attach('profileImage', Buffer.from('img'), 'new.jpg');
+
+    expect(res.statusCode).toBe(200);
+    expect(fs.unlinkSync).toHaveBeenCalled();
+    expect(save).toHaveBeenCalled();
   });
 });
