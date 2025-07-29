@@ -199,7 +199,7 @@ export default function ProductDetail() {
       </div>
 
       {/* 오더북 */}
-      <OrderBook productId={id} />
+      <OrderBook productId={id} product={product} />
     </div>
   );
 }
