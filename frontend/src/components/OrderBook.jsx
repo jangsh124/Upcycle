@@ -13,52 +13,55 @@ export default function OrderBook({ productId, product }) {
 
   // 🆕 현재 상품의 정보를 매도 호가로 변환
   const fetchOrderBook = useCallback(async () => {
-    try {
-      // 현재 상품 정보가 없으면 빈 호가창 표시
-      if (!product) {
-        setOrderBookData({ bids: [], asks: [], spread: null, midPrice: null });
-        return;
-      }
+    if (!product) {
+      console.log("No product data available");
+      return;
+    }
 
-      console.log('📦 현재 상품 정보:', product);
-      
-      // 현재 상품의 가격과 수량을 매도 호가로 변환
+    try {
       const price = product.unitPrice || product.tokenPrice || product.price || 0;
       const quantity = product.shareQuantity || product.tokenSupply || product.tokenCount || 0;
       
-      console.log(`🔍 상품 처리: ${product.title} - 가격: ${price}, 수량: ${quantity}`);
+      console.log("Product data for order book:", { price, quantity, product });
       
       let asks = [];
       if (price > 0 && quantity > 0) {
-        asks = [{
-          price,
-          quantity,
-          coinName: product.title || `코인_${price}`
-        }];
-        console.log(`✅ 매도 호가 생성: ${product.title} - ${price}원 x ${quantity}개`);
-      } else {
-        console.log(`❌ 유효하지 않은 상품: ${product.title} - 가격: ${price}, 수량: ${quantity}`);
+        asks = [{ price, quantity, coinName: product.title || `코인_${price}` }];
       }
       
-      // 매수 호가는 빈 배열로 설정 (실제 매수 주문이 있을 때만 표시)
-      const bids = [];
+      const bids = []; // 매수 호가는 실제 주문이 있을 때만 표시
       
-      // 스프레드와 중간가격 계산
-      const spread = null;
-      const midPrice = asks.length > 0 ? asks[0].price : null;
+      setOrderBookData({ bids, asks, spread: null, midPrice: asks.length > 0 ? asks[0].price : null });
       
-      setOrderBookData({ bids, asks, spread, midPrice });
-      
-      console.log('🔄 오더북 데이터 업데이트:', {
-        asks: asks.map(ask => `${ask.coinName} | ${ask.price}원 | ${ask.quantity}개`),
-        totalAsks: asks.length
-      });
-      
+      // 물량 바 너비 계산
+      calculateVolumeBars(asks, bids);
     } catch (error) {
-      console.error("오더북 데이터 가져오기 실패:", error);
+      console.error("Error fetching order book:", error);
       setOrderBookData({ bids: [], asks: [], spread: null, midPrice: null });
     }
   }, [product]);
+
+  // 물량 바 너비 계산 함수
+  const calculateVolumeBars = (asks, bids) => {
+    const maxAskQuantity = asks.length > 0 ? Math.max(...asks.map(ask => ask.quantity)) : 0;
+    const maxBidQuantity = bids.length > 0 ? Math.max(...bids.map(bid => bid.quantity)) : 0;
+    const maxQuantity = Math.max(maxAskQuantity, maxBidQuantity);
+    
+    // CSS 변수 설정을 위한 스타일 업데이트
+    const style = document.documentElement.style;
+    
+    // 매도 호가 바 너비 설정
+    asks.forEach((ask, index) => {
+      const width = maxQuantity > 0 ? (ask.quantity / maxQuantity) * 100 : 0;
+      style.setProperty(`--ask-width-${index}`, `${width}%`);
+    });
+    
+    // 매수 호가 바 너비 설정
+    bids.forEach((bid, index) => {
+      const width = maxQuantity > 0 ? (bid.quantity / maxQuantity) * 100 : 0;
+      style.setProperty(`--bid-width-${index}`, `${width}%`);
+    });
+  };
 
   useEffect(() => {
     fetchOrderBook();
@@ -223,197 +226,151 @@ export default function OrderBook({ productId, product }) {
   return (
     <div className="order-book-container">
       <div className="order-book-header">
-        <h3>호가창</h3>
-        <div className="order-book-controls">
-          <label>
-            <input
-              type="checkbox"
-              checked={autoRefresh}
-              onChange={(e) => setAutoRefresh(e.target.checked)}
-            />
-            자동 새로고침
-          </label>
+        <h2>호가창</h2>
+        <div className="auto-refresh">
+          <input
+            type="checkbox"
+            id="autoRefresh"
+            checked={autoRefresh}
+            onChange={(e) => setAutoRefresh(e.target.checked)}
+          />
+          <label htmlFor="autoRefresh">자동 새로고침</label>
         </div>
       </div>
 
-      <div className="order-book-content">
-        {/* 왼쪽: 매수 호가 */}
-        <div className="order-side buy-side">
-          <div className="side-header">
-            <span>코인명</span>
-            <span>가격</span>
-            <span>수량</span>
-          </div>
-          <div className="order-levels">
-            {orderBookData.bids.map((bid, index) => (
-              <div 
-                key={`bid-${index}`} 
-                className="order-level bid-level"
-                onClick={() => handlePriceClick(bid.price, bid.quantity, 'buy')}
-              >
-                <span className="level-coin-name">{bid.coinName || '매수주문'}</span>
-                <span className="level-price">{formatPrice(bid.price)}</span>
-                <span className="level-quantity">{formatNumber(bid.quantity)}</span>
-              </div>
-            ))}
-            {orderBookData.bids.length === 0 && (
-              <div className="no-orders">
-                <span>매수 호가가 없습니다</span>
-              </div>
-            )}
-          </div>
+      {/* 통합 호가창 */}
+      <div className="unified-order-book">
+        <div className="order-book-header-row">
+          <div className="bid-header">매수수량</div>
+          <div className="price-header">가격</div>
+          <div className="ask-header">매도수량</div>
         </div>
-
-        {/* 중앙: 현재가/스프레드 */}
-        <div className="order-center">
-          {orderBookData.midPrice && (
-            <div className="current-price">
-              <div className="price-value">{formatPrice(orderBookData.midPrice)}</div>
-              {orderBookData.spread && (
-                <div className="spread">
-                  스프레드: {formatPrice(orderBookData.spread)}
-                </div>
-              )}
+        
+        <div className="order-book-body">
+          {/* 매도 호가 (위쪽부터) */}
+          {orderBookData.asks.slice().reverse().map((ask, index) => (
+            <div 
+              key={`ask-${index}`} 
+              className="order-row ask-row"
+              style={{ '--ask-width': `var(--ask-width-${orderBookData.asks.length - 1 - index}, 0%)` }}
+            >
+              <div className="bid-quantity"></div>
+              <div className="price ask-price">{formatPrice(ask.price)}</div>
+              <div className="ask-quantity">{formatNumber(ask.quantity)}</div>
             </div>
-          )}
-        </div>
-
-        {/* 오른쪽: 매도 호가 */}
-        <div className="order-side sell-side">
-          <div className="side-header">
-            <span>코인명</span>
-            <span>가격</span>
-            <span>수량</span>
-          </div>
-          <div className="order-levels">
-            {orderBookData.asks.map((ask, index) => (
-              <div 
-                key={`ask-${index}`} 
-                className="order-level ask-level"
-                onClick={() => handlePriceClick(ask.price, ask.quantity, 'sell')}
-              >
-                <span className="level-coin-name">{ask.coinName}</span>
-                <span className="level-price">{formatPrice(ask.price)}</span>
-                <span className="level-quantity">{formatNumber(ask.quantity)}</span>
-              </div>
-            ))}
-            {orderBookData.asks.length === 0 && (
-              <div className="no-orders">
-                <span>매도 호가가 없습니다</span>
-              </div>
-            )}
-          </div>
-          {/* 🆕 가격 제한 정보 표시 */}
+          ))}
+          
+          {/* 현재가격 라인 */}
           {orderBookData.asks.length > 0 && (
-            <div className="price-limit-info">
-              <div className="limit-item">
-                <span>판매자 설정가:</span>
-                <span className="original-price">{formatPrice(orderBookData.asks[0].price)}원</span>
-              </div>
-              <div className="limit-item">
-                <span>판매자 설정수량:</span>
-                <span className="original-quantity">{formatNumber(orderBookData.asks[0].quantity)}개</span>
-              </div>
-              <div className="limit-item">
-                <span>재판매 최저가:</span>
-                <span className="min-sell-price">{formatPrice(orderBookData.asks[0].price * 0.98)}원</span>
-              </div>
+            <div className="current-price-row">
+              <div className="bid-quantity"></div>
+              <div className="current-price">{formatPrice(orderBookData.asks[0].price)}</div>
+              <div className="ask-quantity"></div>
+            </div>
+          )}
+          
+          {/* 매수 호가 (아래쪽부터) */}
+          {orderBookData.bids.map((bid, index) => (
+            <div 
+              key={`bid-${index}`} 
+              className="order-row bid-row"
+              style={{ '--bid-width': `var(--bid-width-${index}, 0%)` }}
+            >
+              <div className="bid-quantity">{formatNumber(bid.quantity)}</div>
+              <div className="price bid-price">{formatPrice(bid.price)}</div>
+              <div className="ask-quantity"></div>
+            </div>
+          ))}
+          
+          {/* 매수 호가가 없을 때 */}
+          {orderBookData.bids.length === 0 && (
+            <div className="order-row empty-row">
+              <div className="bid-quantity">매수 호가 없음</div>
+              <div className="price"></div>
+              <div className="ask-quantity"></div>
             </div>
           )}
         </div>
       </div>
+
+      {/* 가격 제한 정보 */}
+      {orderBookData.asks.length > 0 && (
+        <div className="price-limit-info">
+          <div className="limit-item">
+            <span>판매자 설정가:</span>
+            <span className="original-price">{formatPrice(orderBookData.asks[0].price)}원</span>
+          </div>
+          <div className="limit-item">
+            <span>판매자 설정수량:</span>
+            <span className="original-quantity">{formatNumber(orderBookData.asks[0].quantity)}개</span>
+          </div>
+          <div className="limit-item">
+            <span>재판매 최저가:</span>
+            <span className="min-sell-price">{formatPrice(orderBookData.asks[0].price * 0.98)}원</span>
+          </div>
+        </div>
+      )}
 
       {/* 주문 폼 */}
       <div className="order-form">
-        <h4>주문하기</h4>
-        <div className="form-row">
+        <h3>주문하기</h3>
+        <div className="form-group">
           <label>주문 유형:</label>
           <div className="order-type-buttons">
             <button
-              type="button"
-              className={orderForm.side === 'buy' ? 'active' : ''}
+              className={`order-type-btn ${orderForm.side === 'buy' ? 'active' : ''}`}
               onClick={() => {
                 setOrderForm(prev => ({ ...prev, side: 'buy' }));
-                // 🆕 주문 유형 변경 시 검증 다시 실행
-                if (orderForm.price) {
-                  const error = validatePrice(orderForm.price);
-                  setPriceError(error);
-                }
-                if (orderForm.quantity) {
-                  const error = validateQuantity(orderForm.quantity);
-                  setQuantityError(error);
-                }
+                setPriceError(validatePrice(orderForm.price));
+                setQuantityError(validateQuantity(orderForm.quantity));
               }}
             >
               매수
             </button>
             <button
-              type="button"
-              className={orderForm.side === 'sell' ? 'active' : ''}
+              className={`order-type-btn ${orderForm.side === 'sell' ? 'active' : ''}`}
               onClick={() => {
                 setOrderForm(prev => ({ ...prev, side: 'sell' }));
-                // 🆕 주문 유형 변경 시 검증 다시 실행
-                if (orderForm.price) {
-                  const error = validatePrice(orderForm.price);
-                  setPriceError(error);
-                }
-                if (orderForm.quantity) {
-                  const error = validateQuantity(orderForm.quantity);
-                  setQuantityError(error);
-                }
+                setPriceError(validatePrice(orderForm.price));
+                setQuantityError(validateQuantity(orderForm.quantity));
               }}
             >
               매도
             </button>
           </div>
         </div>
-        
-        <div className="form-row">
+
+        <div className="form-group">
           <label>가격:</label>
           <input
             type="number"
             value={orderForm.price}
             onChange={(e) => handlePriceChange(e.target.value)}
             placeholder="가격을 입력하세요"
-            step="0.01"
-            min="0"
             className={priceError ? "error-input" : ""}
           />
+          {priceError && <div className="error-message">{priceError}</div>}
         </div>
-        {priceError && (
-          <div className="error-message">
-            {priceError}
-          </div>
-        )}
-        
-        <div className="form-row">
+
+        <div className="form-group">
           <label>수량:</label>
           <input
             type="number"
             value={orderForm.quantity}
             onChange={(e) => handleQuantityChange(e.target.value)}
             placeholder="수량을 입력하세요"
-            min="1"
             className={quantityError ? "error-input" : ""}
           />
+          {quantityError && <div className="error-message">{quantityError}</div>}
         </div>
-        {quantityError && (
-          <div className="error-message">
-            {quantityError}
-          </div>
-        )}
-        
-        <div className="form-row">
+
+        <div className="form-group">
           <label>총액:</label>
-          <span className="total-amount">{formatNumber(orderForm.total)}원</span>
+          <div className="total-amount">{isNaN(orderForm.total) ? '0' : orderForm.total.toLocaleString()}원</div>
         </div>
-        
-        <button
-          className="place-order-btn"
-          onClick={placeOrder}
-          disabled={isLoading}
-        >
-          {isLoading ? '주문 중...' : '주문하기'}
+
+        <button className="place-order-btn" onClick={placeOrder}>
+          주문하기
         </button>
       </div>
     </div>

@@ -97,109 +97,114 @@ export default function ProductDetail() {
   return (
     <div className="product-detail-page">
       <div className="product-detail-container">
-        {/* 이미지 영역 */}
-        <div className="product-detail-images">
-          <div className="thumbnail-list">
-            {images.map((img, idx) => (
+        {/* 왼쪽: 상품 정보 */}
+        <div className="product-detail-left">
+          {/* 이미지 영역 */}
+          <div className="product-detail-images">
+            <div className="thumbnail-list">
+              {images.map((img, idx) => (
+                <img
+                  key={idx}
+                  src={getImageUrl(img)}
+                  alt={`썸네일 ${idx + 1}`}
+                  className={idx === mainImageIndex ? "thumbnail active" : "thumbnail"}
+                  onMouseEnter={() => setMainImageIndex(idx)}
+                  onClick={() => setMainImageIndex(idx)}
+                />
+              ))}
+            </div>
+            <div className="main-image-wrapper">
               <img
-                key={idx}
-                src={getImageUrl(img)}
-                alt={`썸네일 ${idx + 1}`}
-                className={idx === mainImageIndex ? "thumbnail active" : "thumbnail"}
-                onMouseEnter={() => setMainImageIndex(idx)}
-                onClick={() => setMainImageIndex(idx)}
+                className="main-image"
+                src={getImageUrl(images[mainImageIndex] || "")}
+                alt="대표 이미지"
               />
-            ))}
+            </div>
           </div>
-          <div className="main-image-wrapper">
-            <img
-              className="main-image"
-              src={getImageUrl(images[mainImageIndex] || "")}
-              alt="대표 이미지"
-            />
-          </div>
-        </div>
 
-        {/* 정보 영역 */}
-        <div className="product-detail-info">
-          <div className="product-detail-header">
-            <h1>{product.title}</h1>
-            {isOwner && (
-              <div className="detail-actions">
-                <button className="edit-btn" onClick={() => navigate(`/product-form?edit=${id}`)}>
-                  수정하기
+          {/* 정보 영역 */}
+          <div className="product-detail-info">
+            <div className="product-detail-header">
+              <h1>{product.title}</h1>
+              {isOwner && (
+                <div className="detail-actions">
+                  <button className="edit-btn" onClick={() => navigate(`/product-form?edit=${id}`)}>
+                    수정하기
+                  </button>
+                  <button className="delete-btn" onClick={async () => {
+                      if (!window.confirm("정말 삭제하시겠습니까?")) return;
+                      await axios.delete(`/products/${id}`, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
+                      navigate("/mypage", { replace: true });
+                    }}>
+                    삭제하기
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <p className="location">{product.location?.sido} {product.location?.gugun}</p>
+            <p className="price">{product.price.toLocaleString()}원</p>
+
+            {/* 전체 매수 버튼 */}
+            {remainingQuantity > 0 && (
+              <div className="buy-all-section">
+                <p>전체 구매 시 총액: {product.price.toLocaleString()}원</p>
+                <button className="buy-btn" onClick={handleBuyAll}>
+                  전체 매수
                 </button>
-                <button className="delete-btn" onClick={async () => {
-                    if (!window.confirm("정말 삭제하시겠습니까?")) return;
-                    await axios.delete(`/products/${id}`, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
-                    navigate("/mypage", { replace: true });
-                  }}>
-                  삭제하기
+              </div>
+            )}
+
+            {/* 수량 지정 매수 섹션 */}
+            {remainingQuantity > 0 && (
+              <div className="token-purchase">
+                <div className="remaining-gauge-container">
+                  <div className="remaining-gauge-fill" style={{ width: `${remainingPct}%` }} />
+                </div>
+                <p className="remaining-info">
+                  남은 토큰: {remainingQuantity}개 ({remainingPct}%)
+                </p>
+                <p className="unit-price">토큰 개당 가격: {product.unitPrice.toLocaleString()}원</p>
+
+                <label>
+                  수량:
+                  <input
+                    type="number"
+                    min="1"
+                    max={remainingQuantity}
+                    value={purchaseQuantity}
+                    onChange={(e) =>
+                      setPurchaseQuantity(
+                        Math.min(parseInt(e.target.value, 10) || 0, remainingQuantity)
+                      )
+                    }
+                  />
+                </label>
+                <small>You can buy up to {remainingQuantity} tokens</small>
+
+                <div>Total: {totalCost.toLocaleString()}원</div>
+                <button
+                  className="buy-btn"
+                  onClick={handlePurchase}
+                  disabled={purchaseQuantity < 1 || purchaseQuantity > remainingQuantity}
+                >
+                  구매하기
                 </button>
               </div>
             )}
           </div>
 
-          <p className="location">{product.location?.sido} {product.location?.gugun}</p>
-          <p className="price">{product.price.toLocaleString()}원</p>
+          {/* 설명 */}
+          <div className="product-description-section">
+            <p>{product.description}</p>
+          </div>
+        </div>
 
-          {/* 전체 매수 버튼 */}
-          {remainingQuantity > 0 && (
-            <div className="buy-all-section">
-              <p>전체 구매 시 총액: {product.price.toLocaleString()}원</p>
-              <button className="buy-btn" onClick={handleBuyAll}>
-                전체 매수
-              </button>
-            </div>
-          )}
-
-          {/* 수량 지정 매수 섹션 */}
-          {remainingQuantity > 0 && (
-            <div className="token-purchase">
-              <div className="remaining-gauge-container">
-                <div className="remaining-gauge-fill" style={{ width: `${remainingPct}%` }} />
-              </div>
-              <p className="remaining-info">
-                남은 토큰: {remainingQuantity}개 ({remainingPct}%)
-              </p>
-              <p className="unit-price">토큰 개당 가격: {product.unitPrice.toLocaleString()}원</p>
-
-              <label>
-                수량:
-                <input
-                  type="number"
-                  min="1"
-                  max={remainingQuantity}
-                  value={purchaseQuantity}
-                  onChange={(e) =>
-                    setPurchaseQuantity(
-                      Math.min(parseInt(e.target.value, 10) || 0, remainingQuantity)
-                    )
-                  }
-                />
-              </label>
-              <small>You can buy up to {remainingQuantity} tokens</small>
-
-              <div>Total: {totalCost.toLocaleString()}원</div>
-              <button
-                className="buy-btn"
-                onClick={handlePurchase}
-                disabled={purchaseQuantity < 1 || purchaseQuantity > remainingQuantity}
-              >
-                구매하기
-              </button>
-            </div>
-          )}
+        {/* 오른쪽: 오더북 */}
+        <div className="product-detail-right">
+          <OrderBook productId={id} product={product} />
         </div>
       </div>
-
-      {/* 설명 */}
-      <div className="product-description-section">
-        <p>{product.description}</p>
-      </div>
-
-      {/* 오더북 */}
-      <OrderBook productId={id} product={product} />
     </div>
   );
 }

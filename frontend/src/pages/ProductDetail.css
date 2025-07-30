@@ -2,20 +2,32 @@
 
 /* 페이지 전체 레이아웃 */
 .product-detail-page {
-  max-width: 900px;
+  max-width: 1400px; /* 오더북을 위해 더 넓게 */
   margin: 40px auto;
+  padding: 0 20px;
 }
 
-/* 메인 컨테이너: 이미지 + 정보 */
+/* 메인 컨테이너: 왼쪽(상품정보) + 오른쪽(오더북) */
 .product-detail-container {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 550px; /* 오른쪽 영역을 450px에서 550px로 확장 */
   gap: 30px;
-  padding: 20px;
+  align-items: start;
+}
+
+/* 왼쪽: 상품 정보 영역 */
+.product-detail-left {
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-  align-items: flex-start; /* 위쪽 정렬 */
-  margin-bottom: 20px;
+  padding: 20px;
+}
+
+/* 오른쪽: 오더북 영역 */
+.product-detail-right {
+  position: sticky;
+  top: 20px;
+  height: fit-content;
 }
 
 /* 이미지 섹션 */
@@ -227,4 +239,58 @@
   border-radius: 8px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   white-space: pre-wrap;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 1200px) {
+  .product-detail-container {
+    grid-template-columns: 1fr 500px; /* 오더북 영역을 500px로 조정 */
+  }
+}
+
+@media (max-width: 1000px) {
+  .product-detail-container {
+    grid-template-columns: 1fr; /* 세로 레이아웃으로 변경 */
+    gap: 20px;
+  }
+  
+  .product-detail-right {
+    position: static; /* sticky 해제 */
+    order: -1; /* 오더북을 위로 이동 */
+  }
+  
+  .product-detail-page {
+    max-width: 900px;
+  }
+}
+
+@media (max-width: 768px) {
+  .product-detail-page {
+    margin: 20px auto;
+    padding: 0 10px;
+  }
+  
+  .product-detail-left {
+    padding: 15px;
+  }
+  
+  .product-detail-images {
+    flex-direction: column; /* 이미지 세로 배치 */
+    gap: 15px;
+  }
+  
+  .thumbnail-list {
+    flex-direction: row; /* 썸네일 가로 배치 */
+    width: 100%;
+    overflow-x: auto;
+  }
+  
+  .main-image-wrapper {
+    width: 100%;
+    height: 300px;
+  }
+  
+  .product-detail-info h1 {
+    font-size: 24px;
+  }
 }
