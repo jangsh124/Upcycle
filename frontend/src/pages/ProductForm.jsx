@@ -17,7 +17,6 @@ export default function ProductForm() {
   const [price, setPrice] = useState("");
   const [tokenCount, setTokenCount] = useState(100);
   const [sharePercentage, setSharePercentage] = useState(30);
-  const [shareQuantity, setShareQuantity] = useState(1);
   const [unitPrice, setUnitPrice] = useState(0);
   const [sido, setSido] = useState("");
   const [gugun, setGugun] = useState("");
@@ -25,10 +24,8 @@ export default function ProductForm() {
   const [newFiles, setNewFiles] = useState([]);
   const [mainImageIndex, setMainImageIndex] = useState(0);
   const [msg, setMsg] = useState("");
-  const sharePctValid =
-    (sharePercentage >= 30 && sharePercentage <= 49) || sharePercentage === 100;
-  const shareQtyValid = shareQuantity >= 1 && shareQuantity <= 10000;
-  const formValid = sharePctValid && shareQtyValid;
+  const sharePctValid = (sharePercentage >= 30 && sharePercentage <= 49) || sharePercentage === 100;
+  const formValid = sharePctValid;
   const getFileInfoText = () => {
     const parts = [];
     if (newFiles.length) parts.push(newFiles.map(f => f.name).join(', '));
@@ -38,12 +35,11 @@ export default function ProductForm() {
 
   useEffect(() => {
     const p = parseFloat(price) || 0;
-    const qty = parseInt(shareQuantity, 10) || 1;
     const pct = parseFloat(sharePercentage) / 100 || 0;
     const totalSale = p * pct;
-    const up = qty > 0 ? Math.floor(totalSale / qty) : 0;
+    const up = totalSale > 0 ? Math.round(totalSale / 100) : 0; // 1% 지분당 가격
     setUnitPrice(up);
-   }, [price, shareQuantity, sharePercentage]);
+  }, [price, sharePercentage]);
   // 수정 모드면 기존 값 불러오기
   useEffect(() => {
     if (!editId) return;
@@ -60,11 +56,6 @@ export default function ProductForm() {
         setTokenCount(p.tokenCount || 100);
         if (p.sharePercentage !== undefined) {
           setSharePercentage(p.sharePercentage);
-        }
-        if (p.shareQuantity !== undefined) {
-          setShareQuantity(p.shareQuantity);
-        } else if (p.splitQuantity !== undefined) {
-          setShareQuantity(p.splitQuantity);
         }
         if (p.unitPrice !== undefined) {
           setUnitPrice(p.unitPrice);
@@ -114,10 +105,6 @@ export default function ProductForm() {
       setMsg("판매 비율은 30-49% 또는 100%만 가능합니다.");
       return;
     }
-    if (!shareQtyValid) {
-      setMsg("판매 수량은 1~10000 사이여야 합니다.");
-      return;
-    }
 
     const formData = new FormData();
     formData.append("title", title);
@@ -129,7 +116,6 @@ export default function ProductForm() {
     formData.append('tokenSupply', supply.toString());
     formData.append('tokenPrice', pricePerToken.toString());
     formData.append('sharePercentage', sharePercentage.toString());
-    formData.append('shareQuantity', shareQuantity.toString());
     formData.append('unitPrice', unitPrice.toString());
 // 변경: location 단일 키로 JSON 문자열을 전송
     formData.append("location", JSON.stringify({ sido, gugun }));
@@ -217,7 +203,7 @@ export default function ProductForm() {
 
         <div className="share-percentage-container">
           <label>
-            Select percentage of total ownership to sell
+            판매할 지분 선택
             <select
               value={sharePercentage}
               onChange={e => setSharePercentage(Number(e.target.value))}
@@ -233,23 +219,10 @@ export default function ProductForm() {
           )}
         </div>
 
-        <div className="share-quantity-container">
-          <label>
-            판매 수량
-            <input
-              type="number"
-              min="1"
-              max="10000"
-              value={shareQuantity}
-              onChange={e => setShareQuantity(e.target.value)}
-            />
-          </label>
-          {!shareQtyValid && (
-            <div className="helper-text">1~10000 사이의 값을 입력하세요.</div>
-          )}
+        <div className="token-price-info">
+          <div>1% 지분당 가격: {unitPrice.toLocaleString()}원</div>
+          <div>총 판매 금액: {(parseFloat(price) * sharePercentage / 100).toLocaleString()}원</div>
         </div>
-
-        <div className="token-price-info">Unit Price per Token: {unitPrice.toLocaleString()}원</div>
 
 
 <div className="token-count-container">

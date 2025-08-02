@@ -169,11 +169,27 @@
 }
 
 .token-price-info {
-  text-align: right;
-  margin-top: -8px;
-  margin-bottom: 12px;
-  font-size: 0.9rem;
-  color: #555;
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 15px 0;
+  border: 1px solid #e9ecef;
+}
+
+.token-price-info > div {
+  margin: 5px 0;
+  font-weight: 500;
+}
+
+.token-price-info > div:first-child {
+  color: #007bff;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.token-price-info > div:last-child {
+  color: #28a745;
+  font-size: 14px;
 }
 /* share quantity input */
 .share-quantity-container {
