@@ -57,8 +57,24 @@
   padding: 12px 15px;
   font-weight: 600;
   font-size: 14px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 2px solid #333;
   color: #333;
+}
+
+.order-book-header-row > div {
+  padding: 4px 8px;
+  border-right: 2px solid #333;
+  position: relative;
+  transition: background-color 0.2s ease;
+}
+
+.order-book-header-row > div:last-child {
+  border-right: none;
+}
+
+.order-book-header-row > div:hover {
+  background: rgba(0, 123, 255, 0.1);
+  border-radius: 4px;
 }
 
 .bid-header {
@@ -89,14 +105,36 @@
   grid-template-columns: 1fr 1fr 1fr;
   padding: 8px 15px;
   font-size: 13px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 2px solid #ddd;
   transition: background-color 0.2s;
   position: relative;
   overflow: hidden;
+  cursor: pointer;
 }
 
 .order-row:hover {
   background: #f8f9fa;
+}
+
+/* 각 칸에 테두리 추가 */
+.order-row > div {
+  padding: 6px 10px;
+  border-right: 2px solid #333;
+  position: relative;
+  z-index: 2;
+  transition: all 0.2s ease;
+}
+
+.order-row > div:last-child {
+  border-right: none;
+}
+
+/* 호버 시 각 칸 개별 강조 */
+.order-row > div:hover {
+  background: rgba(0, 123, 255, 0.15);
+  border-radius: 6px;
+  transform: scale(1.02);
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
 }
 
 /* 매도 호가 (위쪽) - 파란색 바 */

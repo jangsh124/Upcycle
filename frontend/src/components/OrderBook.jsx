@@ -6,7 +6,6 @@ import "./OrderBook.css";
 export default function OrderBook({ productId, product }) {
   const [orderBookData, setOrderBookData] = useState({ bids: [], asks: [], spread: null, midPrice: null });
   const [orderForm, setOrderForm] = useState({ side: "buy", price: "", quantity: "", total: 0 });
-  const [isLoading, setIsLoading] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [priceError, setPriceError] = useState("");
   const [quantityError, setQuantityError] = useState("");
@@ -124,7 +123,6 @@ export default function OrderBook({ productId, product }) {
       }
     }
 
-    setIsLoading(true);
     try {
       await axios.post("/api/orders", {
         productId,
@@ -139,19 +137,7 @@ export default function OrderBook({ productId, product }) {
     } catch (error) {
       console.error("주문 등록 실패:", error);
       alert("주문 등록에 실패했습니다.");
-    } finally {
-      setIsLoading(false);
     }
-  };
-
-  const handlePriceClick = (price, quantity, side) => {
-    setOrderForm(prev => ({
-      ...prev,
-      side,
-      price: price.toString(),
-      quantity: quantity.toString(),
-      total: price * quantity
-    }));
   };
 
   const handleQuantityChange = (quantity) => {

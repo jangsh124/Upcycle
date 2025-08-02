@@ -144,6 +144,15 @@ export default function ProductDetail() {
 
             <p className="location">{product.location?.sido} {product.location?.gugun}</p>
             <p className="price">{product.price.toLocaleString()}원</p>
+            
+            {/* 업로드 날짜 표시 */}
+            <p className="upload-date">
+              업로드: {new Date(product.createdAt).toLocaleDateString('ko-KR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })}
+            </p>
 
             {/* 전체 매수 버튼 */}
             {remainingQuantity > 0 && (
