@@ -177,19 +177,31 @@
 }
 
 .token-price-info > div {
-  margin: 5px 0;
+  margin: 6px 0;
   font-weight: 500;
 }
 
 .token-price-info > div:first-child {
-  color: #007bff;
+  color: #007bff; /* Blue for product price */
   font-size: 16px;
   font-weight: 600;
 }
 
-.token-price-info > div:last-child {
-  color: #28a745;
+.token-price-info > div:nth-child(2) {
+  color: #6c757d; /* Gray for share percentage */
   font-size: 14px;
+}
+
+.token-price-info > div:nth-child(3) {
+  color: #28a745; /* Green for unit price */
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.token-price-info > div:last-child {
+  color: #dc3545; /* Red for total sale amount */
+  font-size: 14px;
+  font-weight: 600;
 }
 /* share quantity input */
 .share-quantity-container {

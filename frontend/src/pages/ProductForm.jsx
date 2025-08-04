@@ -13,17 +13,16 @@ export default function ProductForm() {
   const editId = params.get("edit");
 
   const [title, setTitle] = useState("");
-  const [description, setDesc] = useState("");
+  const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
-  const [tokenCount, setTokenCount] = useState(100);
+  const [tokenCount, setTokenCount] = useState(10000);
   const [sharePercentage, setSharePercentage] = useState(30);
-  const [unitPrice, setUnitPrice] = useState(0);
+  const [msg, setMsg] = useState("");
   const [sido, setSido] = useState("");
   const [gugun, setGugun] = useState("");
   const [existingImages, setExistingImages] = useState([]);
   const [newFiles, setNewFiles] = useState([]);
   const [mainImageIndex, setMainImageIndex] = useState(0);
-  const [msg, setMsg] = useState("");
   const sharePctValid = (sharePercentage >= 30 && sharePercentage <= 49) || sharePercentage === 100;
   const formValid = sharePctValid;
   const getFileInfoText = () => {
@@ -34,12 +33,22 @@ export default function ProductForm() {
   };
 
   useEffect(() => {
+    // 0.001% 단위 계산은 calculateUnitPrice 함수에서 처리
+  }, [price, sharePercentage]);
+
+  // 0.001% 단위 계산 함수
+  const calculateShareUnits = () => {
+    const pct = parseFloat(sharePercentage) / 100 || 0;
+    return Math.round(pct * 100000); // 0.001% 단위로 변환 (소수점 3자리)
+  };
+
+  const calculateUnitPrice = () => {
     const p = parseFloat(price) || 0;
     const pct = parseFloat(sharePercentage) / 100 || 0;
-    const totalSale = p * pct;
-    const up = totalSale > 0 ? Math.round(totalSale / 100) : 0; // 1% 지분당 가격
-    setUnitPrice(up);
-  }, [price, sharePercentage]);
+    const totalSale = p * pct; // 총 판매 금액
+    const units = calculateShareUnits(); // 0.001% 단위 개수
+    return units > 0 ? Math.round(totalSale / units) : 0; // 0.001% 단위당 가격
+  };
   // 수정 모드면 기존 값 불러오기
   useEffect(() => {
     if (!editId) return;
@@ -51,14 +60,11 @@ export default function ProductForm() {
       .then(res => {
         const p = res.data;
         setTitle(p.title || "");
-        setDesc(p.description || "");
+        setDescription(p.description || "");
         setPrice(p.price || "");
-        setTokenCount(p.tokenCount || 100);
+        setTokenCount(p.tokenCount || 10000);
         if (p.sharePercentage !== undefined) {
           setSharePercentage(p.sharePercentage);
-        }
-        if (p.unitPrice !== undefined) {
-          setUnitPrice(p.unitPrice);
         }
         setSido(p.location?.sido || "");
         setGugun(p.location?.gugun || "");
@@ -111,12 +117,12 @@ export default function ProductForm() {
     formData.append("description", description);
     formData.append("price", price);
     formData.append("tokenCount", tokenCount);
-    const supply = tokenCount;
-    const pricePerToken = Math.round(Number(price) / supply);
+    const supply = calculateShareUnits(); // 0.01% 단위로 변환된 수량
+    const pricePerToken = calculateUnitPrice(); // 0.01% 단위당 가격
     formData.append('tokenSupply', supply.toString());
     formData.append('tokenPrice', pricePerToken.toString());
     formData.append('sharePercentage', sharePercentage.toString());
-    formData.append('unitPrice', unitPrice.toString());
+    formData.append('unitPrice', pricePerToken.toString());
 // 변경: location 단일 키로 JSON 문자열을 전송
     formData.append("location", JSON.stringify({ sido, gugun }));
     formData.append("mainImageIndex", mainImageIndex);
@@ -162,7 +168,7 @@ export default function ProductForm() {
           className="form-textarea"
           placeholder="설명"
           value={description}
-          onChange={e => setDesc(e.target.value)}
+          onChange={e => setDescription(e.target.value)}
           required
         />
 
@@ -220,8 +226,10 @@ export default function ProductForm() {
         </div>
 
         <div className="token-price-info">
-          <div>1% 지분당 가격: {unitPrice.toLocaleString()}원</div>
-          <div>총 판매 금액: {(parseFloat(price) * sharePercentage / 100).toLocaleString()}원</div>
+          <div>상품 가격: {parseFloat(price || 0).toLocaleString()}원</div>
+          <div>판매 지분: {sharePercentage}%</div>
+          <div>0.001% 지분당 가격: {calculateUnitPrice().toLocaleString()}원</div>
+          <div>총 판매 금액: {(parseFloat(price || 0) * sharePercentage / 100).toLocaleString()}원</div>
         </div>
 
 
