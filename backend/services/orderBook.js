@@ -287,14 +287,44 @@ class OrderBook {
     //   }
     // });
     
-    // 매도 주문들 중 남은 수량이 있는 것만 집계
+    // 매도 주문들 중 남은 수량이 있는 것만 집계 (메모리)
     asks.forEach(order => {
       const remaining = order.quantity - order.filled;
       if (remaining > 0) {
         askMap.set(order.price, (askMap.get(order.price) || 0) + remaining);
-        console.log(`📉 매도 호가: ${order.price}원 x ${remaining}개 (주문ID: ${order.orderId})`);
+        console.log(`📉 매도 호가(메모리): ${order.price}원 x ${remaining}개 (주문ID: ${order.orderId})`);
       }
     });
+
+    // 🆕 서버 재시작 등으로 메모리가 비었을 수 있으니 DB의 미체결 매도 주문을 합산
+    try {
+      const dbOpenSells = await OrderModel.find({
+        productId,
+        type: 'sell',
+        remainingQuantity: { $gt: 0 }
+      }).lean();
+      for (const s of dbOpenSells) {
+        const remaining = s.remainingQuantity;
+        if (remaining > 0) {
+          askMap.set(s.price, (askMap.get(s.price) || 0) + remaining);
+          console.log(`📉 매도 호가(DB): ${s.price}원 x ${remaining}개 (주문ID: ${s.orderId})`);
+          // 메모리북에 복원 (없을 때만)
+          const existsInMemory = asks.some(a => a.orderId === s.orderId);
+          if (!existsInMemory) {
+            asks.push({
+              price: s.price,
+              quantity: s.quantity,
+              filled: s.quantity - remaining,
+              orderId: s.orderId,
+              timestamp: new Date(s.createdAt || Date.now()).getTime(),
+              side: 'sell'
+            });
+          }
+        }
+      }
+    } catch (e) {
+      console.error(`❌ DB 매도 주문 집계 실패: ${e.message}`);
+    }
     
     // 매도 호가가 없을 때 기본 매도 호가 생성
     if (askMap.size === 0) {
