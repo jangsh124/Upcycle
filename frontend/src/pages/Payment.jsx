@@ -301,6 +301,10 @@ const Payment = () => {
         <p>부가세 (수수료의 10%): {feeVat.toLocaleString()}원</p>
         <hr />
         <p className="total-price">총 결제 금액 (수수료·부가세 포함): <strong>{totalAmount.toLocaleString()}원</strong></p>
+        <p className="legal-note" style={{ marginTop: '6px', color: '#6b7280', fontSize: '12px', lineHeight: 1.5 }}>
+          플랫폼 거래 수수료 1% 및 해당 수수료의 부가가치세 10%가 부과됩니다.
+          작품에 대한 부가세 부과 여부와 세율은 판매자 유형(일반과세/간이과세/면세)에 따라 달라질 수 있습니다.
+        </p>
         
         {/* 결제 안내 */}
         <div className="payment-info">
