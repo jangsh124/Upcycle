@@ -306,11 +306,12 @@ class OrderBook {
       for (const s of dbOpenSells) {
         const remaining = s.remainingQuantity;
         if (remaining > 0) {
-          askMap.set(s.price, (askMap.get(s.price) || 0) + remaining);
-          console.log(`📉 매도 호가(DB): ${s.price}원 x ${remaining}개 (주문ID: ${s.orderId})`);
           // 메모리북에 복원 (없을 때만)
           const existsInMemory = asks.some(a => a.orderId === s.orderId);
           if (!existsInMemory) {
+            // 호가 집계에도 중복 없이 추가
+            askMap.set(s.price, (askMap.get(s.price) || 0) + remaining);
+            console.log(`📉 매도 호가(DB): ${s.price}원 x ${remaining}개 (주문ID: ${s.orderId})`);
             asks.push({
               price: s.price,
               quantity: s.quantity,
@@ -319,6 +320,9 @@ class OrderBook {
               timestamp: new Date(s.createdAt || Date.now()).getTime(),
               side: 'sell'
             });
+          } else {
+            // 이미 메모리에 반영되어 있으므로 호가 집계에 중복 추가하지 않음
+            console.log(`⏭️  중복 방지: 메모리에 존재하는 DB주문 ${s.orderId}는 집계 추가 생략`);
           }
         }
       }
@@ -364,8 +368,16 @@ class OrderBook {
               });
             }
 
-            // 집계에 기본 잔량을 병합(기존 동일 가격 주문이 있으면 누적)
-            askMap.set(unitPrice, (askMap.get(unitPrice) || 0) + remainingQuantity);
+            // 집계에 기본 잔량을 중복 없이 병합
+            // 현재 askMap에는 메모리의 기본 주문이 있었다면 이미 "메모리 잔량"이 포함되어 있음
+            const defaultInMemory = (this.books[productId]?.asks || []).find(a => a.orderId === `default_${productId}`);
+            const memoryDefaultRemaining = defaultInMemory ? Math.max(0, defaultInMemory.quantity - defaultInMemory.filled) : 0;
+            const alreadyCountedAtPrice = askMap.get(unitPrice) || 0;
+            // 중복을 피하기 위해 메모리 기본잔량으로 이미 반영된 부분을 제외한 델타만 추가
+            const delta = Math.max(0, remainingQuantity - Math.min(memoryDefaultRemaining, alreadyCountedAtPrice));
+            if (delta > 0) {
+              askMap.set(unitPrice, alreadyCountedAtPrice + delta);
+            }
           }
         }
       }
