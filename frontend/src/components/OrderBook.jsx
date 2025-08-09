@@ -18,6 +18,7 @@ export default function OrderBook({ productId, product }) {
   const [quantityError, setQuantityError] = useState("");
   const [userHolding, setUserHolding] = useState({ quantity: 0, averagePrice: 0 });
   const [sellSummary, setSellSummary] = useState({ totalHolding: 0, openSellQuantity: 0, availableToSell: 0 });
+  const [openSellList, setOpenSellList] = useState([]);
 
   // 가격 입력 필드에 기본값 설정
   useEffect(() => {
@@ -119,6 +120,18 @@ export default function OrderBook({ productId, product }) {
     }
   }, [productId]);
 
+  const fetchOpenSellList = useCallback(async () => {
+    if (!productId) return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+      const { data } = await axios.get(`/api/orders/open-sell-list/${productId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setOpenSellList(data.items || []);
+    } catch (e) {}
+  }, [productId]);
+
   // 물량 바 너비 계산 함수
   const calculateVolumeBars = (asks, bids) => {
     const maxAskQuantity = asks.length > 0 ? Math.max(...asks.map(ask => ask.quantity)) : 0;
@@ -149,9 +162,10 @@ export default function OrderBook({ productId, product }) {
       fetchOrderBook();
       fetchUserHolding();
       fetchOpenSellSummary();
+      fetchOpenSellList();
     }, 2000);
     return () => clearInterval(interval);
-  }, [fetchOrderBook, fetchUserHolding, fetchOpenSellSummary]);
+  }, [fetchOrderBook, fetchUserHolding, fetchOpenSellSummary, fetchOpenSellList]);
 
   const placeOrder = async () => {
     if (!orderForm.price || !orderForm.quantity) {
@@ -554,6 +568,31 @@ export default function OrderBook({ productId, product }) {
         <button className="place-order-btn" onClick={placeOrder}>
           주문하기
         </button>
+
+        {/* 🆕 미체결 매도 목록 + 취소 */}
+        {openSellList.length > 0 && (
+          <div style={{marginTop: '14px'}}>
+            <div style={{fontSize: '13px', marginBottom: '6px', color: '#374151'}}>내 미체결 매도</div>
+            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '6px'}}>
+              {openSellList.map(item => (
+                <div key={item.orderId} style={{display:'contents'}}>
+                  <div style={{fontSize:'12px'}}>가격: {item.price.toLocaleString()}원</div>
+                  <div style={{fontSize:'12px'}}>남음: {item.remainingQuantity.toLocaleString()}개</div>
+                  <button type="button" className="percent-btn" onClick={async () => {
+                    try {
+                      const token = localStorage.getItem('token');
+                      await axios.post(`/api/orders/${item.orderId}/cancel`, {}, { headers: { Authorization: `Bearer ${token}` } });
+                      fetchOpenSellList();
+                      fetchOrderBook();
+                    } catch (e) {
+                      alert(e.response?.data?.error || '취소 실패');
+                    }
+                  }}>취소</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

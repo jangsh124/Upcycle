@@ -45,6 +45,75 @@ exports.getOpenSellSummary = async (req, res) => {
   }
 };
 
+// 사용자의 미체결 매도 주문 목록 반환
+exports.getOpenSellList = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const items = await Order.find({
+      userId,
+      productId,
+      type: 'sell',
+      remainingQuantity: { $gt: 0 },
+      status: { $in: ['open', 'partial'] }
+    })
+      .select('orderId price remainingQuantity createdAt')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return res.json({ items });
+  } catch (error) {
+    console.error('getOpenSellList error:', error);
+    return res.status(500).json({ error: 'Failed to fetch open sell list' });
+  }
+};
+
+// 주문 취소(매도): 남은 수량이 있는 경우에 한해 소거. 동시 체결과 경합 시 안전하게 실패 처리
+exports.cancelOrder = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const userId = req.user.id;
+
+    // 대상 주문 조회
+    const order = await Order.findOne({ orderId, userId, type: 'sell' });
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    if (order.remainingQuantity <= 0 || order.status === 'filled') {
+      return res.status(400).json({ error: 'Nothing to cancel' });
+    }
+
+    // 경쟁 상태를 피하기 위해 남은 수량이 그대로일 때만 취소되도록 조건부 업데이트
+    const prevRemaining = order.remainingQuantity;
+    const updated = await Order.findOneAndUpdate(
+      {
+        orderId,
+        userId,
+        type: 'sell',
+        status: { $in: ['open', 'partial'] },
+        remainingQuantity: prevRemaining
+      },
+      { $set: { status: 'cancelled', remainingQuantity: 0 } },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(409).json({ error: 'Cancel failed due to concurrent match. Try again.' });
+    }
+
+    // 메모리 오더북에서도 제거
+    try {
+      await OrderBook.cancelOrder(order.productId.toString(), orderId);
+    } catch (e) {
+      console.warn('OrderBook.cancelOrder warning:', e.message);
+    }
+
+    return res.json({ success: true, cancelledOrderId: orderId });
+  } catch (error) {
+    console.error('cancelOrder error:', error);
+    return res.status(500).json({ error: 'Failed to cancel order' });
+  }
+};
 // 주문 추가: 메모리북에 넣고 DB에도 기록
 exports.addOrder = async (req, res) => {
   try {
