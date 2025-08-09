@@ -17,6 +17,34 @@ exports.getBook = async (req, res) => {
   }
 };
 
+// 사용자의 특정 상품에 대한 미체결 매도 합계 조회
+exports.getOpenSellSummary = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const docs = await Order.find({
+      userId,
+      productId,
+      type: 'sell',
+      remainingQuantity: { $gt: 0 }
+    }).select('remainingQuantity').lean();
+
+    const openSellQuantity = docs.reduce((sum, d) => sum + (d.remainingQuantity || 0), 0);
+
+    // 보유 지분도 함께 반환하면 프론트가 추가 요청 없이 계산 가능
+    const holding = await Holding.findOne({ userId, productId }).select('quantity').lean();
+    const totalHolding = holding?.quantity || 0;
+    const availableToSell = Math.max(0, totalHolding - openSellQuantity);
+
+    return res.json({ openSellQuantity, totalHolding, availableToSell });
+  } catch (error) {
+    console.error('getOpenSellSummary error:', error);
+    return res.status(500).json({ error: 'Failed to fetch open sell summary' });
+  }
+};
+
 // 주문 추가: 메모리북에 넣고 DB에도 기록
 exports.addOrder = async (req, res) => {
   try {

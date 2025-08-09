@@ -17,6 +17,7 @@ export default function OrderBook({ productId, product }) {
   const [priceError, setPriceError] = useState("");
   const [quantityError, setQuantityError] = useState("");
   const [userHolding, setUserHolding] = useState({ quantity: 0, averagePrice: 0 });
+  const [sellSummary, setSellSummary] = useState({ totalHolding: 0, openSellQuantity: 0, availableToSell: 0 });
 
   // 가격 입력 필드에 기본값 설정
   useEffect(() => {
@@ -103,6 +104,21 @@ export default function OrderBook({ productId, product }) {
     }
   }, [productId]);
 
+  // 🆕 미체결 매도 합계 및 보유량 요약 조회
+  const fetchOpenSellSummary = useCallback(async () => {
+    if (!productId) return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+      const { data } = await axios.get(`/api/orders/open-sell/${productId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSellSummary(data);
+    } catch (e) {
+      // 무시: 비로그인/권한 없음 등
+    }
+  }, [productId]);
+
   // 물량 바 너비 계산 함수
   const calculateVolumeBars = (asks, bids) => {
     const maxAskQuantity = asks.length > 0 ? Math.max(...asks.map(ask => ask.quantity)) : 0;
@@ -128,12 +144,14 @@ export default function OrderBook({ productId, product }) {
   useEffect(() => {
     fetchOrderBook();
     fetchUserHolding();
+    fetchOpenSellSummary();
     const interval = setInterval(() => {
       fetchOrderBook();
       fetchUserHolding();
+      fetchOpenSellSummary();
     }, 2000);
     return () => clearInterval(interval);
-  }, [fetchOrderBook, fetchUserHolding]);
+  }, [fetchOrderBook, fetchUserHolding, fetchOpenSellSummary]);
 
   const placeOrder = async () => {
     if (!orderForm.price || !orderForm.quantity) {
@@ -340,6 +358,15 @@ export default function OrderBook({ productId, product }) {
 
       {/* 통합 호가창 */}
       <div className="unified-order-book">
+        {/* 주문 가능 정보 */}
+        <div className="order-availability" style={{marginBottom: '8px', fontSize: '12px', color: '#374151'}}>
+          <div>보유 지분: <strong>{(sellSummary.totalHolding || userHolding.quantity).toLocaleString()}</strong>개</div>
+          <div>이미 매도 등록: <strong>{(sellSummary.openSellQuantity || 0).toLocaleString()}</strong>개</div>
+          <div>추가 매도 가능 수량: <strong>{(sellSummary.availableToSell || Math.max(0, userHolding.quantity)).toLocaleString()}</strong>개</div>
+          {orderBookData.asks.length > 0 && (
+            <div>최저 매도가(기준): <strong>{orderBookData.asks[0].price.toLocaleString()}원</strong></div>
+          )}
+        </div>
         <div className="order-book-header-row">
           <div className="ask-header">매도수량</div>
           <div className="price-header">가격</div>
