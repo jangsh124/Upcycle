@@ -326,67 +326,51 @@ class OrderBook {
       console.error(`❌ DB 매도 주문 집계 실패: ${e.message}`);
     }
     
-    // 매도 호가가 없을 때 기본 매도 호가 생성
-    if (askMap.size === 0) {
-      try {
-        const product = await ProductModel.findById(productId);
-        if (product && product.sharePercentage > 0) {
-          const totalSaleAmount = product.price * (product.sharePercentage / 100);
-          const totalUnitCount = Math.round(product.sharePercentage * 1000); // 0.001% 단위
-          const unitPrice = totalUnitCount > 0 ? Math.round(totalSaleAmount / totalUnitCount) : 0;
-          
-          if (unitPrice > 0 && totalUnitCount > 0) {
-            // 🆕 데이터베이스에서 실제 매수된 총 수량 조회
-            let soldQuantity = 0;
-            
-            try {
-              // 모든 사용자의 해당 상품 보유 수량 합계 조회
-              const totalHoldings = await HoldingModel.find({ productId: productId });
-              soldQuantity = totalHoldings.reduce((sum, holding) => sum + holding.quantity, 0);
-              
-              console.log(`📊 데이터베이스에서 조회한 총 매수 수량: ${soldQuantity}개`);
-            } catch (dbError) {
-              console.error(`❌ 매수 수량 조회 실패: ${dbError.message}`);
-              // 데이터베이스 조회 실패 시 기존 로직 사용
-              const existingDefaultAsk = this.books[productId]?.asks?.find(ask => ask.orderId === `default_${productId}`);
-              if (existingDefaultAsk) {
-                soldQuantity = existingDefaultAsk.filled;
-              }
-            }
-            
-            // 남은 매도 수량 계산
-            const remainingQuantity = totalUnitCount - soldQuantity;
-            
-            if (remainingQuantity > 0) {
-              // 기본 매도 호가를 실제 주문장에 추가
-              const defaultAskOrder = {
+    // 기본 매도 호가(발행 잔량)는 항상 병행 표시: 사용자 매도와 함께 공존
+    try {
+      const product = await ProductModel.findById(productId);
+      if (product && product.sharePercentage > 0) {
+        const totalSaleAmount = product.price * (product.sharePercentage / 100);
+        const totalUnitCount = Math.round(product.sharePercentage * 1000); // 0.001% 단위
+        const unitPrice = totalUnitCount > 0 ? Math.round(totalSaleAmount / totalUnitCount) : 0;
+
+        if (unitPrice > 0 && totalUnitCount > 0) {
+          // 누적 매수 수량 조회(보유량 합계)
+          let soldQuantity = 0;
+          try {
+            const totalHoldings = await HoldingModel.find({ productId: productId });
+            soldQuantity = totalHoldings.reduce((sum, h) => sum + h.quantity, 0);
+            console.log(`📊 누적 매수 수량: ${soldQuantity}개`);
+          } catch (dbError) {
+            console.error(`❌ 매수 수량 조회 실패: ${dbError.message}`);
+            const existingDefaultAsk = this.books[productId]?.asks?.find(a => a.orderId === `default_${productId}`);
+            if (existingDefaultAsk) soldQuantity = existingDefaultAsk.filled;
+          }
+
+          const remainingQuantity = Math.max(0, totalUnitCount - soldQuantity);
+
+          if (remainingQuantity > 0) {
+            // 메모리에 기본 호가가 없으면 복원
+            const hasDefaultInMemory = (this.books[productId]?.asks || []).some(a => a.orderId === `default_${productId}`);
+            if (!hasDefaultInMemory) {
+              if (!this.books[productId]) this.books[productId] = { bids: [], asks: [] };
+              this.books[productId].asks.push({
                 price: unitPrice,
-                quantity: totalUnitCount, // 전체 수량
-                filled: soldQuantity, // 매수된 수량
+                quantity: totalUnitCount,
+                filled: soldQuantity,
                 orderId: `default_${productId}`,
                 timestamp: Date.now(),
                 side: 'sell'
-              };
-              
-              // 주문장에 기본 매도 호가 추가 (기존 것 교체)
-              if (!this.books[productId]) {
-                this.books[productId] = { bids: [], asks: [] };
-              }
-              
-              // 기존 기본 매도 호가 제거
-              this.books[productId].asks = this.books[productId].asks.filter(ask => ask.orderId !== `default_${productId}`);
-              
-              // 새로운 기본 매도 호가 추가
-              this.books[productId].asks.push(defaultAskOrder);
-              
-              askMap.set(unitPrice, remainingQuantity);
-              console.log(`📝 기본 매도 호가 생성: ${unitPrice}원 x ${remainingQuantity}개 (전체: ${totalUnitCount}개, 매수됨: ${soldQuantity}개)`);
+              });
             }
+
+            // 집계에 기본 잔량을 병합(기존 동일 가격 주문이 있으면 누적)
+            askMap.set(unitPrice, (askMap.get(unitPrice) || 0) + remainingQuantity);
           }
         }
-      } catch (error) {
-        console.error(`❌ 기본 매도 호가 생성 실패: ${error.message}`);
       }
+    } catch (error) {
+      console.error(`❌ 기본 매도 호가 병합 실패: ${error.message}`);
     }
     
     const result = {
