@@ -258,7 +258,6 @@ const Payment = () => {
             >
               {processing ? '처리 중...' : '카드로 결제하기'}
             </button>
-            <p className="money-back">💸 30일 환불 보장</p>
           </div>
         )}
 
@@ -313,7 +312,6 @@ const Payment = () => {
             <li>• 안전한 SSL 암호화 결제</li>
             <li>• 3D Secure 인증 지원</li>
             <li>• 즉시 결제 처리</li>
-            <li>• 30일 환불 보장</li>
           </ul>
         </div>
       </div>
