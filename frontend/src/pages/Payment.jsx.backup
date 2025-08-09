@@ -1,0 +1,270 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import './Payment.css';
+
+const Payment = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState('card');
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCVC, setCardCVC] = useState('');
+  const [cryptoAddress, setCryptoAddress] = useState('');
+  const [processing, setProcessing] = useState(false);
+
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const response = await axios.get(`/api/products/${id}`);
+        setProduct(response.data);
+      } catch (err) {
+        setError('상품 정보를 불러오는데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [id]);
+
+  const handleCardPayment = async () => {
+    if (!cardNumber || !cardExpiry || !cardCVC) {
+      alert('모든 카드 정보를 입력해주세요.');
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('로그인이 필요합니다.');
+        navigate('/login');
+        return;
+      }
+
+      const orderData = sessionStorage.getItem('pendingOrder');
+      if (!orderData) {
+        alert('주문 정보가 없습니다.');
+        navigate(`/products/${id}`);
+        return;
+      }
+
+      const order = JSON.parse(orderData);
+      
+      const response = await axios.post('/api/orders', {
+        productId: id,
+        type: order.type,
+        price: order.price,
+        quantity: order.quantity,
+        paymentMethod: 'card',
+        cardNumber: cardNumber.slice(-4) // 마지막 4자리만 저장
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data.success) {
+        alert('카드 결제가 완료되었습니다!');
+        sessionStorage.removeItem('pendingOrder');
+        navigate(`/products/${id}`);
+      }
+    } catch (err) {
+      console.error('카드 결제 실패:', err);
+      alert('카드 결제에 실패했습니다.');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleCryptoPayment = async () => {
+    if (!cryptoAddress) {
+      alert('암호화폐 주소를 입력해주세요.');
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('로그인이 필요합니다.');
+        navigate('/login');
+        return;
+      }
+
+      const orderData = sessionStorage.getItem('pendingOrder');
+      if (!orderData) {
+        alert('주문 정보가 없습니다.');
+        navigate(`/products/${id}`);
+        return;
+      }
+
+      const order = JSON.parse(orderData);
+      
+      const response = await axios.post('/api/orders', {
+        productId: id,
+        type: order.type,
+        price: order.price,
+        quantity: order.quantity,
+        paymentMethod: 'crypto',
+        cryptoAddress: cryptoAddress
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data.success) {
+        alert('암호화폐 결제가 완료되었습니다!');
+        sessionStorage.removeItem('pendingOrder');
+        navigate(`/products/${id}`);
+      }
+    } catch (err) {
+      console.error('암호화폐 결제 실패:', err);
+      alert('암호화폐 결제에 실패했습니다.');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleCancel = () => {
+    sessionStorage.removeItem('pendingOrder');
+    navigate(`/products/${id}`);
+  };
+
+  if (loading) return <div className="payment-container">로딩 중...</div>;
+  if (error) return <div className="payment-container">{error}</div>;
+  if (!product) return <div className="payment-container">상품을 찾을 수 없습니다.</div>;
+
+  const orderData = sessionStorage.getItem('pendingOrder');
+  const order = orderData ? JSON.parse(orderData) : null;
+
+  if (!order) {
+    return (
+      <div className="payment-container">
+        <h2>주문 정보가 없습니다.</h2>
+        <button onClick={() => navigate(`/products/${id}`)}>
+          상품 페이지로 돌아가기
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="payment-container">
+      <h2>결제 페이지</h2>
+      
+      <div className="product-info">
+        <h3>{product.name}</h3>
+        <p>{product.description}</p>
+      </div>
+
+      <div className="order-summary">
+        <h3>주문 내역</h3>
+        <div className="order-details">
+          <p><strong>주문 유형:</strong> {order.type === 'buy' ? '매수' : '매도'}</p>
+          <p><strong>가격:</strong> {order.price.toLocaleString()}원</p>
+          <p><strong>수량:</strong> {order.quantity.toLocaleString()}개</p>
+          <p><strong>총액:</strong> {(order.price * order.quantity).toLocaleString()}원</p>
+        </div>
+      </div>
+
+      <div className="payment-methods">
+        <h3>결제 방법 선택</h3>
+        <div className="method-buttons">
+          <button 
+            className={`method-btn ${paymentMethod === 'card' ? 'active' : ''}`}
+            onClick={() => setPaymentMethod('card')}
+          >
+            💳 카드 결제
+          </button>
+          <button 
+            className={`method-btn ${paymentMethod === 'crypto' ? 'active' : ''}`}
+            onClick={() => setPaymentMethod('crypto')}
+          >
+            ₿ 암호화폐 결제
+          </button>
+        </div>
+      </div>
+
+      {paymentMethod === 'card' && (
+        <div className="card-payment-form">
+          <h3>카드 정보 입력</h3>
+          <div className="form-group">
+            <label>카드 번호:</label>
+            <input
+              type="text"
+              value={cardNumber}
+              onChange={(e) => setCardNumber(e.target.value)}
+              placeholder="1234 5678 9012 3456"
+              maxLength="19"
+            />
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label>만료일:</label>
+              <input
+                type="text"
+                value={cardExpiry}
+                onChange={(e) => setCardExpiry(e.target.value)}
+                placeholder="MM/YY"
+                maxLength="5"
+              />
+            </div>
+            <div className="form-group">
+              <label>CVC:</label>
+              <input
+                type="text"
+                value={cardCVC}
+                onChange={(e) => setCardCVC(e.target.value)}
+                placeholder="123"
+                maxLength="3"
+              />
+            </div>
+          </div>
+          <button 
+            className="payment-btn confirm" 
+            onClick={handleCardPayment}
+            disabled={processing}
+          >
+            {processing ? '처리 중...' : '카드로 결제하기'}
+          </button>
+        </div>
+      )}
+
+      {paymentMethod === 'crypto' && (
+        <div className="crypto-payment-form">
+          <h3>암호화폐 결제</h3>
+          <div className="form-group">
+            <label>암호화폐 주소:</label>
+            <input
+              type="text"
+              value={cryptoAddress}
+              onChange={(e) => setCryptoAddress(e.target.value)}
+              placeholder="0x1234567890abcdef..."
+            />
+          </div>
+          <div className="crypto-info">
+            <p><strong>지원 암호화폐:</strong> Bitcoin, Ethereum, USDT</p>
+            <p><strong>결제 금액:</strong> {(order.price * order.quantity).toLocaleString()}원</p>
+          </div>
+          <button 
+            className="payment-btn confirm" 
+            onClick={handleCryptoPayment}
+            disabled={processing}
+          >
+            {processing ? '처리 중...' : '암호화폐로 결제하기'}
+          </button>
+        </div>
+      )}
+
+      <div className="payment-actions">
+        <button className="payment-btn cancel" onClick={handleCancel}>
+          취소
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default Payment;

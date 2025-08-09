@@ -8,7 +8,7 @@ export default function ForgotPassword() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:5001/api/auth/forgot-password', { email });
+      await axios.post('/api/auth/forgot-password', { email });
       setMsg('메일을 확인하세요');
     } catch (err) {
       setMsg('에러가 발생했습니다');

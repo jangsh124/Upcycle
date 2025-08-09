@@ -24,9 +24,9 @@ import Payment from "./pages/Payment";
 import Home from "./pages/Home";
 
 // ─── 아래 한 줄을 추가 ────────────────────────────────────
-// 모든 axios 요청의 기본 URL을 '/api'로 설정하면,
+// 모든 axios 요청의 기본 URL을 빈 문자열로 설정하면,
 // CRA의 proxy 설정을 통해 localhost:5001로 프록시됩니다.
-axios.defaults.baseURL = "http://localhost:5001/api";
+axios.defaults.baseURL = "";
 
 // 401 응답 시 자동 로그아웃
 axios.interceptors.response.use(
@@ -125,8 +125,8 @@ function App() {
         return;
       }
       try {
-        // 상대경로 '/user/me' 로 호출
-        const res = await axios.get("/user/me", {
+        // 상대경로 '/api/user/me' 로 호출
+        const res = await axios.get("/api/user/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = res.data.user || res.data;

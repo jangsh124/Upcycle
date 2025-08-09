@@ -37,7 +37,7 @@ export default function ResetPassword({ setUserEmail }) {
     }
 
     try {
-      await axios.post('http://localhost:5001/api/auth/reset-password', {
+      await axios.post('/api/auth/reset-password', {
         token,
         password,
       });

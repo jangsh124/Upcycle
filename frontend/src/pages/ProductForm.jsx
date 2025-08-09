@@ -54,7 +54,7 @@ export default function ProductForm() {
     if (!editId) return;
     const token = localStorage.getItem("token");
     axios
-      .get(`http://localhost:5001/api/products/${editId}`, {
+              .get(`/api/products/${editId}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then(res => {
@@ -132,7 +132,7 @@ export default function ProductForm() {
     try {
       if (editId) {
         await axios.patch(
-          `http://localhost:5001/api/products/${editId}`,
+          `/api/products/${editId}`,
           formData,
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -140,7 +140,7 @@ export default function ProductForm() {
         setTimeout(() => navigate(`/products/${editId}`), 1000);
       } else {
         await axios.post(
-          "http://localhost:5001/api/products",
+          "/api/products",
           formData,
           { headers: { Authorization: `Bearer ${token}` } }
         );

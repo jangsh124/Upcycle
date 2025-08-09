@@ -1,9 +1,11 @@
 // ── src/components/OrderBook.jsx ──
 import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./OrderBook.css";
 
 export default function OrderBook({ productId, product }) {
+  const navigate = useNavigate();
   const [orderBookData, setOrderBookData] = useState({ bids: [], asks: [], spread: null, midPrice: null });
   const [orderForm, setOrderForm] = useState({ 
     side: "buy", 
@@ -14,6 +16,7 @@ export default function OrderBook({ productId, product }) {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [priceError, setPriceError] = useState("");
   const [quantityError, setQuantityError] = useState("");
+  const [userHolding, setUserHolding] = useState({ quantity: 0, averagePrice: 0 });
 
   // 가격 입력 필드에 기본값 설정
   useEffect(() => {
@@ -23,45 +26,82 @@ export default function OrderBook({ productId, product }) {
     }
   }, [orderBookData.asks, orderForm.price]);
 
-  // 🆕 현재 상품의 정보를 매도 호가로 변환
+  // 🆕 실제 주문 데이터를 가져와서 호가창 구성
   const fetchOrderBook = useCallback(async () => {
-    if (!product) { console.log("No product data available"); return; }
+    if (!productId) { console.log("No productId available"); return; }
     try {
-      // 0.001% 단위 계산
-      const productPrice = parseFloat(product.price) || 0;
-      const sharePercentage = parseFloat(product.sharePercentage) || 0;
+      // 실제 주문 데이터 가져오기
+      const response = await axios.get(`/api/orders/book/${productId}`);
+      const orderBook = response.data;
       
-      // 0.001% 단위당 가격 계산
+      console.log("✅ 실제 주문 데이터:", orderBook);
+      
+      // 상품 정보로 기본 매도 호가 생성 (아직 매도 주문이 없을 때)
+      const productPrice = parseFloat(product?.price) || 0;
+      const sharePercentage = parseFloat(product?.sharePercentage) || 0;
       const totalSaleAmount = productPrice * (sharePercentage / 100);
-      const unitCount = Math.round(sharePercentage * 1000); // 0.001% 단위 개수
+      const unitCount = Math.round(sharePercentage * 1000);
       const unitPrice = unitCount > 0 ? Math.round(totalSaleAmount / unitCount) : 0;
       
-      console.log("Product data for order book:", { 
-        productPrice, 
-        sharePercentage, 
-        totalSaleAmount,
-        unitCount,
-        unitPrice,
-        product 
-      });
+      let asks = orderBook.asks || [];
+      let bids = orderBook.bids || [];
       
-      let asks = [];
-      if (unitPrice > 0 && unitCount > 0) {
-        asks = [{ 
-          price: unitPrice, // 0.001% 지분당 가격
-          quantity: unitCount, // 0.001% 단위 개수
-          coinName: product.title || `코인_${unitPrice}`,
-          sharePercentage: sharePercentage
-        }];
-      }
-      const bids = []; // 매수 호가는 실제 주문이 있을 때만 표시
-      setOrderBookData({ bids, asks, spread: null, midPrice: asks.length > 0 ? asks[0].price : null });
+      // 백엔드에서 실제 주문 데이터만 사용 (기본 매도 호가는 백엔드에서 관리)
+      console.log("📊 서버에서 받은 호가 데이터:", { asks, bids });
+      
+      setOrderBookData({ 
+        bids, 
+        asks, 
+        spread: orderBook.spread || null, 
+        midPrice: orderBook.midPrice || (asks.length > 0 ? asks[0].price : null) 
+      });
       calculateVolumeBars(asks, bids);
     } catch (error) {
-      console.error("Error fetching order book:", error);
-      setOrderBookData({ bids: [], asks: [], spread: null, midPrice: null });
+      console.error("❌ 주문 데이터 조회 실패:", error);
+      // 에러 시 기본 데이터로 설정
+      if (product) {
+        const productPrice = parseFloat(product.price) || 0;
+        const sharePercentage = parseFloat(product.sharePercentage) || 0;
+        const totalSaleAmount = productPrice * (sharePercentage / 100);
+        const unitCount = Math.round(sharePercentage * 1000);
+        const unitPrice = unitCount > 0 ? Math.round(totalSaleAmount / unitCount) : 0;
+        
+        let asks = [];
+        if (unitPrice > 0 && unitCount > 0) {
+          asks = [{ 
+            price: unitPrice,
+            quantity: unitCount,
+            coinName: product.title || `코인_${unitPrice}`,
+            sharePercentage: sharePercentage
+          }];
+        }
+        setOrderBookData({ bids: [], asks, spread: null, midPrice: asks.length > 0 ? asks[0].price : null });
+        calculateVolumeBars(asks, []);
+      }
     }
-  }, [product]);
+  }, [productId, product]);
+
+  // 🆕 사용자 보유 지분 조회
+  const fetchUserHolding = useCallback(async () => {
+    if (!productId) return;
+    
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    
+    try {
+      const response = await axios.get(`/api/holdings/user/${productId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUserHolding(response.data);
+      console.log("✅ 사용자 보유 지분:", response.data);
+      console.log("✅ 보유 지분율:", response.data.ownershipPercentage);
+      console.log("✅ 전체 지분 수량:", response.data.totalShares);
+      console.log("✅ 보유 수량:", response.data.quantity);
+    } catch (error) {
+      console.error("❌ 보유 지분 조회 실패:", error);
+      setUserHolding({ quantity: 0, averagePrice: 0 });
+    }
+  }, [productId]);
 
   // 물량 바 너비 계산 함수
   const calculateVolumeBars = (asks, bids) => {
@@ -87,9 +127,13 @@ export default function OrderBook({ productId, product }) {
 
   useEffect(() => {
     fetchOrderBook();
-    const interval = setInterval(fetchOrderBook, 2000);
+    fetchUserHolding();
+    const interval = setInterval(() => {
+      fetchOrderBook();
+      fetchUserHolding();
+    }, 2000);
     return () => clearInterval(interval);
-  }, [fetchOrderBook]);
+  }, [fetchOrderBook, fetchUserHolding]);
 
   const placeOrder = async () => {
     if (!orderForm.price || !orderForm.quantity) {
@@ -97,69 +141,67 @@ export default function OrderBook({ productId, product }) {
       return;
     }
 
-    // 🆕 매수 주문 시 가격과 수량 제한 검증
+    if (priceError || quantityError) {
+      alert("입력값을 확인해주세요.");
+      return;
+    }
+
+    // 토큰 확인
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("로그인이 필요합니다.");
+      return;
+    }
+
+    // 매수 주문인 경우 결제 페이지로 이동
     if (orderForm.side === 'buy') {
-      const buyPrice = parseFloat(orderForm.price);
-      const buyQuantity = parseInt(orderForm.quantity);
-      
-      // 현재 상품의 매도 호가 확인
-      if (orderBookData.asks.length === 0) {
-        alert("현재 매도 호가가 없습니다.");
-        return;
-      }
-      
-      const currentAsk = orderBookData.asks[0];
-      
-      // 판매자가 설정한 가격과 수량 제한 확인
-      if (buyPrice !== currentAsk.price) {
-        alert(`판매자가 설정한 가격(${currentAsk.price.toLocaleString()}원)으로만 구매할 수 있습니다.`);
-        return;
-      }
-      
-      if (buyQuantity > currentAsk.quantity) {
-        alert(`판매자가 설정한 수량(${currentAsk.quantity}개)을 초과하여 구매할 수 없습니다.`);
-        return;
-      }
-    }
-
-    // 🆕 매도 주문 시 가격 제한 검증 (구매자 재판매)
-    if (orderForm.side === 'sell') {
-      const sellPrice = parseFloat(orderForm.price);
-      
-      // 현재 상품의 원래 매도 가격 확인
-      if (orderBookData.asks.length === 0) {
-        alert("현재 매도 호가가 없습니다.");
-        return;
-      }
-      
-      const originalPrice = orderBookData.asks[0].price;
-      const minSellPrice = originalPrice * 0.98; // 원래 가격의 -2%
-      
-      if (sellPrice < minSellPrice) {
-        alert(`원래 구매가격(${originalPrice.toLocaleString()}원)의 최대 -2%인 ${minSellPrice.toLocaleString()}원까지만 판매할 수 있습니다.`);
-        return;
-      }
-      
-      if (sellPrice > originalPrice) {
-        alert(`원래 구매가격(${originalPrice.toLocaleString()}원)보다 높은 가격으로는 판매할 수 없습니다.`);
-        return;
-      }
-    }
-
-    try {
-      await axios.post("/api/orders", {
+      const orderData = {
         productId,
-        side: orderForm.side,
+        type: orderForm.side,
         price: parseFloat(orderForm.price),
-        quantity: parseInt(orderForm.quantity)
-      });
+        quantity: parseFloat(orderForm.quantity),
+        total: orderForm.total
+      };
       
-      setOrderForm({ side: "buy", price: "", quantity: "", total: 0 });
+      // 주문 정보를 세션 스토리지에 저장
+      sessionStorage.setItem('pendingOrder', JSON.stringify(orderData));
+      
+      // 결제 페이지로 이동 (수량 파라미터 포함)
+      navigate(`/products/${productId}/payment?quantity=${orderForm.quantity}`);
+      return;
+    }
+
+    // 매도 주문은 기존 로직 유지 (즉시 처리)
+    try {
+      console.log(`📋 매도 주문 요청: ${orderForm.side} ${orderForm.price}원 x ${orderForm.quantity}개`);
+      
+      const response = await axios.post('/api/orders', {
+        productId,
+        type: orderForm.side,
+        price: parseFloat(orderForm.price),
+        quantity: parseFloat(orderForm.quantity)
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      console.log('✅ 매도 주문 성공:', response.data);
+      
+      // 주문 성공 후 폼 초기화
+      setOrderForm(prev => ({
+        ...prev,
+        price: orderBookData.asks.length > 0 ? orderBookData.asks[0].price.toString() : "",
+        quantity: "",
+        total: 0
+      }));
+      
+      // 호가창 새로고침
       fetchOrderBook();
-      alert("주문이 성공적으로 등록되었습니다!");
+      
+      alert(`매도 주문이 성공적으로 처리되었습니다! (체결: ${response.data.matches}건)`);
+      
     } catch (error) {
-      console.error("주문 등록 실패:", error);
-      alert("주문 등록에 실패했습니다.");
+      console.error('❌ 매도 주문 실패:', error);
+      alert(`매도 주문 실패: ${error.response?.data?.error || error.message}`);
     }
   };
 
@@ -194,7 +236,7 @@ export default function OrderBook({ productId, product }) {
       const sellerPrice = orderBookData.asks[0].price;
       
       if (side === 'buy') {
-        // 매수: 판매자 가격으로 설정
+        // 🆕 매수: 최저 매도 가격으로 자동 설정 (수정 불가)
         newPrice = sellerPrice.toString();
       } else if (side === 'sell') {
         // 매도: 최대 -2% 가격으로 설정
@@ -223,13 +265,23 @@ export default function OrderBook({ productId, product }) {
     const sellerPrice = orderBookData.asks[0].price;
     
     if (orderForm.side === 'buy') {
-      if (inputPrice !== sellerPrice) {
-        return `판매자 설정가(${sellerPrice.toLocaleString()}원)로만 구매 가능합니다`;
+      // 🆕 매수 가격 자유화: 원하는 가격으로 매수 가능
+      if (inputPrice <= 0) {
+        return `가격은 0보다 커야 합니다`;
+      }
+      // 최대 매수가 제한 (판매자 가격의 120%까지)
+      const maxBuyPrice = Math.round(sellerPrice * 1.2);
+      if (inputPrice > maxBuyPrice) {
+        return `최대 매수가는 ${maxBuyPrice.toLocaleString()}원입니다`;
       }
     } else if (orderForm.side === 'sell') {
-      const minSellPrice = Math.round(sellerPrice * 0.98);
-      if (inputPrice < minSellPrice) {
-        return `재판매 최저가는 ${minSellPrice.toLocaleString()}원입니다`;
+      // 🆕 매도 가격 제한: 100원 이상만 가능
+      if (inputPrice < 100) {
+        return `매도 가격은 100원 이상이어야 합니다`;
+      }
+      // 판매자 설정 가격 이하로 판매 불가
+      if (inputPrice < sellerPrice) {
+        return `판매 가격은 ${sellerPrice.toLocaleString()}원 이상이어야 합니다`;
       }
     }
     return "";
@@ -241,7 +293,6 @@ export default function OrderBook({ productId, product }) {
     
     const inputQuantity = parseFloat(quantity); // 0.001% 단위 개수
     const maxQuantity = orderBookData.asks[0].quantity; // 판매자의 0.001% 단위 개수
-    const sharePercentage = orderBookData.asks[0].sharePercentage || 0;
     
     if (orderForm.side === 'buy') {
       if (inputQuantity > maxQuantity) {
@@ -249,6 +300,14 @@ export default function OrderBook({ productId, product }) {
       }
       if (inputQuantity < 1) { // 최소 1개 (0.001%)
         return `최소 1개(0.001%) 지분을 구매해야 합니다`;
+      }
+    } else if (orderForm.side === 'sell') {
+      // 🆕 재판매 수량 검증: 보유 지분 확인
+      if (inputQuantity < 1) {
+        return `최소 1개(0.001%) 지분을 판매해야 합니다`;
+      }
+      if (inputQuantity > userHolding.quantity) {
+        return `보유 지분(${userHolding.quantity.toLocaleString()}개)을 초과할 수 없습니다`;
       }
     }
     return "";
@@ -276,53 +335,46 @@ export default function OrderBook({ productId, product }) {
       {/* 통합 호가창 */}
       <div className="unified-order-book">
         <div className="order-book-header-row">
-          <div className="bid-header">매수수량</div>
-          <div className="price-header">가격</div>
           <div className="ask-header">매도수량</div>
+          <div className="price-header">가격</div>
+          <div className="bid-header">매수수량</div>
         </div>
         
         <div className="order-book-body">
-          {/* 매도 호가 (위쪽부터) */}
+          {/* 매도 호가 (높은 가격부터 위쪽) */}
           {orderBookData.asks.slice().reverse().map((ask, index) => (
             <div 
               key={`ask-${index}`} 
               className="order-row ask-row"
               style={{ '--ask-width': `var(--ask-width-${orderBookData.asks.length - 1 - index}, 0%)` }}
             >
-              <div className="bid-quantity"></div>
-              <div className="price ask-price">{formatPrice(ask.price)}</div>
               <div className="ask-quantity">{formatShareUnits(ask.quantity)}</div>
+              <div className="price ask-price">{formatPrice(ask.price)}</div>
+              <div className="bid-quantity"></div>
             </div>
           ))}
           
-          {/* 현재가격 라인 */}
-          {orderBookData.asks.length > 0 && (
-            <div className="current-price-row">
-              <div className="bid-quantity"></div>
-              <div className="current-price">{formatPrice(orderBookData.asks[0].price)}</div>
-              <div className="ask-quantity"></div>
-            </div>
-          )}
+          {/* 현재가격 라인 - 제거 */}
           
-          {/* 매수 호가 (아래쪽부터) */}
+          {/* 매수 호가 (높은 가격부터 위쪽) - 백엔드에서 이미 정렬됨 */}
           {orderBookData.bids.map((bid, index) => (
             <div 
               key={`bid-${index}`} 
               className="order-row bid-row"
               style={{ '--bid-width': `var(--bid-width-${index}, 0%)` }}
             >
-              <div className="bid-quantity">{formatShareUnits(bid.quantity)}</div>
-              <div className="price bid-price">{formatPrice(bid.price)}</div>
               <div className="ask-quantity"></div>
+              <div className="price bid-price">{formatPrice(bid.price)}</div>
+              <div className="bid-quantity">{formatShareUnits(bid.quantity)}</div>
             </div>
           ))}
           
-          {/* 매수 호가가 없을 때 */}
+          {/* 매수 호가가 없을 때만 메시지 표시 */}
           {orderBookData.bids.length === 0 && (
-            <div className="order-row empty-row">
-              <div className="bid-quantity">매수 호가 없음</div>
-              <div className="price"></div>
+            <div className="no-bids-message">
               <div className="ask-quantity"></div>
+              <div className="price">매수 호가 없음</div>
+              <div className="bid-quantity"></div>
             </div>
           )}
         </div>
@@ -343,6 +395,29 @@ export default function OrderBook({ productId, product }) {
             <span>재판매 최저가:</span>
             <span className="min-sell-price">{formatPrice(orderBookData.asks[0].price * 0.98)}원</span>
           </div>
+          {/* 🆕 사용자 보유 지분 정보 */}
+          <div className="limit-item">
+            <span>내 보유 지분:</span>
+            <span className="user-holding">{formatShareUnits(userHolding.quantity)}개</span>
+          </div>
+          {userHolding.quantity > 0 && (
+            <>
+              <div className="limit-item">
+                <span>평균 매수가:</span>
+                <span className="avg-price">{formatPrice(userHolding.averagePrice)}원</span>
+              </div>
+              <div className="limit-item">
+                <span>보유 지분율:</span>
+                <span className="ownership-percentage">{userHolding.ownershipPercentage}%</span>
+              </div>
+            </>
+          )}
+          {userHolding.quantity === 0 && (
+            <div className="limit-item">
+              <span>보유 지분:</span>
+              <span className="no-holding">보유한 지분이 없습니다</span>
+            </div>
+          )}
         </div>
       )}
 
@@ -369,14 +444,31 @@ export default function OrderBook({ productId, product }) {
 
         <div className="form-group">
           <label>가격:</label>
-          <input
-            type="number"
-            value={orderForm.price}
-            onChange={(e) => handlePriceChange(e.target.value)}
-            placeholder="가격을 입력하세요"
-            className={priceError ? "error-input" : ""}
-          />
-          {priceError && <div className="error-message">{priceError}</div>}
+          {orderForm.side === 'buy' ? (
+            <div className="price-display">
+              <input
+                type="number"
+                value={orderForm.price}
+                disabled={true}
+                className="disabled-input"
+                placeholder="최저 매도 가격이 자동 설정됩니다"
+              />
+              <div className="price-hint">
+                💡 최저 매도 가격: {orderBookData.asks.length > 0 ? formatPrice(orderBookData.asks[0].price) : '0'}원
+              </div>
+            </div>
+          ) : (
+            <>
+              <input
+                type="number"
+                value={orderForm.price}
+                onChange={(e) => handlePriceChange(e.target.value)}
+                placeholder="재판매 가격을 입력하세요"
+                className={priceError ? "error-input" : ""}
+              />
+              {priceError && <div className="error-message">{priceError}</div>}
+            </>
+          )}
         </div>
 
         <div className="form-group">

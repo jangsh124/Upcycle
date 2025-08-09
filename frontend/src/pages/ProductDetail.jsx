@@ -16,17 +16,18 @@ export default function ProductDetail() {
   const [purchaseQuantity, setPurchaseQuantity] = useState(1);
   const [purchased, setPurchased] = useState(0);
 
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
       axios
-        .get("/user/me", { headers: { Authorization: `Bearer ${token}` } })
+        .get("/api/user/me", { headers: { Authorization: `Bearer ${token}` } })
         .then((res) => setUser(res.data.user || res.data))
         .catch(() => {});
     }
 
     axios
-      .get(`/products/${id}`)
+      .get(`/api/products/${id}`)
       .then((res) => {
         setProduct(res.data);
         setMainImageIndex(0);
@@ -38,9 +39,11 @@ export default function ProductDetail() {
       });
 
     axios
-      .get(`/products/${id}/purchased`)
+      .get(`/api/products/${id}/purchased`)
       .then((res) => setPurchased(res.data.purchased || 0))
       .catch(() => setPurchased(0));
+
+
   }, [id, navigate]);
 
   if (!product) return <div className="product-detail-loading">로딩 중…</div>;
@@ -52,6 +55,8 @@ export default function ProductDetail() {
     (product.user && product.user._id);
   const isOwner = user && user._id.toString() === ownerId?.toString();
 
+  const images = Array.isArray(product.images) ? product.images : [];
+
   // 토큰 전체 수량이 없으면 tokenSupply, shareQuantity, 1 중 하나로 처리
   const totalQuantity =
     product.shareQuantity || product.tokenSupply || 1;
@@ -61,10 +66,8 @@ export default function ProductDetail() {
     : 0;
   const totalCost = purchaseQuantity * (product.unitPrice || 0);
 
-  const images = Array.isArray(product.images) ? product.images : [];
-
   const handleBuyAll = () => {
-    navigate(`/products/${id}/payment?quantity=${totalQuantity}`);
+    navigate(`/products/${id}/payment?quantity=${remainingQuantity}`);
   };
 
   const handlePurchase = async () => {
@@ -75,23 +78,17 @@ export default function ProductDetail() {
       navigate("/login");
       return;
     }
-    try {
-      await axios.post(
-        "/api/purchase",
-        {
-          productId: id,
-          quantity: purchaseQuantity,
-          unitPrice: product.unitPrice,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      alert("구매 완료");
-      // 구매 후 재로딩
-      const res = await axios.get(`/products/${id}/purchased`);
-      setPurchased(res.data.purchased || 0);
-    } catch (err) {
-      alert(err.response?.data?.error || "구매 실패");
-    }
+    
+    // 디버깅: 이동할 URL 확인
+    const paymentUrl = `/products/${id}/payment?quantity=${purchaseQuantity}`;
+    console.log('🔍 ProductDetail - 이동할 URL:', {
+      purchaseQuantity,
+      paymentUrl,
+      currentUrl: window.location.href
+    });
+    
+    // 결제 페이지로 이동
+    navigate(paymentUrl);
   };
 
   return (
@@ -154,53 +151,7 @@ export default function ProductDetail() {
               })}
             </p>
 
-            {/* 전체 매수 버튼 */}
-            {remainingQuantity > 0 && (
-              <div className="buy-all-section">
-                <p>전체 구매 시 총액: {product.price.toLocaleString()}원</p>
-                <button className="buy-btn" onClick={handleBuyAll}>
-                  전체 매수
-                </button>
-              </div>
-            )}
 
-            {/* 수량 지정 매수 섹션 */}
-            {remainingQuantity > 0 && (
-              <div className="token-purchase">
-                <div className="remaining-gauge-container">
-                  <div className="remaining-gauge-fill" style={{ width: `${remainingPct}%` }} />
-                </div>
-                <p className="remaining-info">
-                  남은 토큰: {remainingQuantity}개 ({remainingPct}%)
-                </p>
-                <p className="unit-price">토큰 개당 가격: {product.unitPrice.toLocaleString()}원</p>
-
-                <label>
-                  수량:
-                  <input
-                    type="number"
-                    min="1"
-                    max={remainingQuantity}
-                    value={purchaseQuantity}
-                    onChange={(e) =>
-                      setPurchaseQuantity(
-                        Math.min(parseInt(e.target.value, 10) || 0, remainingQuantity)
-                      )
-                    }
-                  />
-                </label>
-                <small>You can buy up to {remainingQuantity} tokens</small>
-
-                <div>Total: {totalCost.toLocaleString()}원</div>
-                <button
-                  className="buy-btn"
-                  onClick={handlePurchase}
-                  disabled={purchaseQuantity < 1 || purchaseQuantity > remainingQuantity}
-                >
-                  구매하기
-                </button>
-              </div>
-            )}
           </div>
 
           {/* 설명 */}
@@ -212,6 +163,50 @@ export default function ProductDetail() {
         {/* 오른쪽: 오더북 */}
         <div className="product-detail-right">
           <OrderBook productId={id} product={product} />
+
+          {/* 전체 매수 버튼 */}
+          {remainingQuantity > 0 && (
+            <div className="buy-all-section">
+              <p>전체 구매 시 총액: {product.price.toLocaleString()}원</p>
+              <button className="buy-btn" onClick={handleBuyAll}>
+                전체 매수
+              </button>
+            </div>
+          )}
+
+          {/* 수량 지정 매수 섹션 */}
+          {remainingQuantity > 0 && (
+            <div className="token-purchase">
+              <div className="remaining-gauge-container">
+                <div className="remaining-gauge-fill" style={{ width: `${remainingPct}%` }} />
+              </div>
+              <p className="remaining-info">
+                남은 토큰: {remainingQuantity}개 ({remainingPct}%)
+              </p>
+              <p className="unit-price">토큰 개당 가격: {product.unitPrice.toLocaleString()}원</p>
+
+              <label>
+                수량:
+                <input
+                  type="number"
+                  min="1"
+                  max={remainingQuantity}
+                  value={purchaseQuantity}
+                  onChange={(e) => setPurchaseQuantity(parseInt(e.target.value) || 1)}
+                />
+              </label>
+              <p>You can buy up to {remainingQuantity} tokens</p>
+              <p>Total: {totalCost.toLocaleString()}원</p>
+              <button onClick={() => {
+                console.log('🔍 ProductDetail - 구매하기 버튼 클릭됨:', {
+                  purchaseQuantity,
+                  remainingQuantity,
+                  id
+                });
+                handlePurchase();
+              }}>구매하기</button>
+            </div>
+          )}
         </div>
       </div>
     </div>

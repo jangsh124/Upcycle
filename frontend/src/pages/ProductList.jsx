@@ -24,7 +24,7 @@ export default function ProductList({ userEmail }) {
       console.log("▶ fetch sort:", sort);
       try {
         const res = await axios.get(
-          "http://localhost:5001/api/products",
+          "/api/products",
           { params: { sort } }
         );
         console.log("◀ 응답 data:", res.data);

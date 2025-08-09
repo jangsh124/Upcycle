@@ -168,35 +168,28 @@
   transition: width 0.3s ease;
 }
 
-/* 매수 호가 (아래쪽) - 빨간색 바 */
-.bid-row {
-  color: #dc3545;
-}
-
-.bid-row .price {
-  text-align: center;
-  font-weight: 500;
-  position: relative;
-  z-index: 2;
-}
-
-.bid-row .bid-quantity {
-  text-align: left;
-  color: #dc3545;
-  position: relative;
-  z-index: 2;
-}
-
+/* Buy Order (Bid) - Red Bar */
+.bid-row { color: #333; } /* Default text color for buy */
+.bid-row .bid-quantity { color: #333; } /* Default quantity text color */
 .bid-row::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
+  top: 0; left: 0; bottom: 0;
   width: var(--bid-width, 0%);
-  background: rgba(220, 53, 69, 0.1);
+  background: rgba(0, 123, 255, 0.1); /* Blue bar background */
   z-index: 1;
   transition: width 0.3s ease;
+}
+
+/* No bids message */
+.no-bids-message {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  padding: 8px 10px;
+  color: #999;
+  font-style: italic;
+  text-align: center;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 /* 현재가격 라인 */
@@ -209,11 +202,23 @@
   font-weight: 600;
   font-size: 14px;
   color: #856404;
+  position: relative;
+}
+
+.current-price-row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #dc3545 0%, #ffc107 50%, #007bff 100%);
 }
 
 .current-price {
   text-align: center;
   color: #856404;
+  font-weight: 700;
 }
 
 /* 빈 호가 */
@@ -263,6 +268,26 @@
 .min-sell-price {
   color: #ffc107;
   font-weight: 600;
+}
+
+.user-holding {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.avg-price {
+  color: #007bff;
+  font-weight: 600;
+}
+
+.price-hint {
+  font-size: 12px;
+  color: #666;
+  margin-top: 4px;
+  padding: 4px 8px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border-left: 3px solid #007bff;
 }
 
 /* 주문 폼 */
@@ -354,6 +379,27 @@
   background-color: #fff5f5;
   border-left: 3px solid #dc3545;
   border-radius: 3px;
+}
+
+/* 🆕 비활성화된 입력 필드 스타일 */
+.disabled-input {
+  background-color: #f8f9fa !important;
+  color: #6c757d !important;
+  cursor: not-allowed !important;
+  border-color: #dee2e6 !important;
+}
+
+.disabled-input:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: #dee2e6 !important;
+}
+
+/* 🆕 가격 표시 컨테이너 */
+.price-display {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 /* 총액 */

@@ -28,7 +28,7 @@ export default function Signup({ onSwitch }) {
       return;
     }
     try {
-      const res = await axios.post("http://localhost:5001/api/auth/signup", {
+      const res = await axios.post("/api/auth/signup", {
         email,
         password: pw,
       });

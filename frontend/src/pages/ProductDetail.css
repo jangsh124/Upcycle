@@ -159,6 +159,29 @@
   background-color: #c0392b;
 }
 
+
+
+/* standalone purchase widget */
+.standalone-purchase-widget {
+  margin: 20px 0;
+  padding: 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.standalone-purchase-widget h4 {
+  margin-bottom: 12px;
+}
+
+/* 프로덕트 설명 섹션 */
+.product-description-section {
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  white-space: pre-wrap;
+}
+
 /* 전체 매수 버튼 */
 .buy-all-section {
   margin-top: 16px;
@@ -213,45 +236,53 @@
   margin: 8px 0;
 }
 
-/* 게이지 바 채워진 부분 */
+/* 잔여 % 게이지 바 채우기 */
 .remaining-gauge-fill {
   height: 100%;
-  background-color: #2471e7;
+  background: linear-gradient(90deg, #4caf50, #8bc34a);
   transition: width 0.3s ease;
 }
 
-/* 잔여 정보 텍스트 */
+/* 잔여 정보 */
 .remaining-info {
-  margin: 4px 0 12px;
-  font-size: 0.9rem;
-  color: #555;
+  margin: 8px 0;
+  font-size: 14px;
+  color: #666;
 }
 
-/* 개당 가격 텍스트 */
+/* 단위 가격 */
 .unit-price {
-  margin-bottom: 12px;
-  font-weight: 500;
+  margin: 8px 0;
+  font-size: 14px;
+  color: #333;
+  font-weight: 600;
 }
 
-/* standalone purchase widget */
-.standalone-purchase-widget {
-  margin: 20px 0;
-  padding: 16px;
+/* 수량 입력 */
+.token-purchase label {
+  display: block;
+  margin: 12px 0 8px 0;
+  font-weight: 600;
+  color: #333;
+}
+
+.token-purchase input {
+  width: 100%;
+  padding: 8px;
   border: 1px solid #ddd;
-  border-radius: 8px;
+  border-radius: 4px;
+  font-size: 14px;
 }
 
-.standalone-purchase-widget h4 {
-  margin-bottom: 12px;
+.token-purchase input:focus {
+  outline: none;
+  border-color: #2471e7;
 }
 
-/* 프로덕트 설명 섹션 */
-.product-description-section {
-  padding: 20px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  white-space: pre-wrap;
+.token-purchase p {
+  margin: 8px 0;
+  font-size: 14px;
+  color: #666;
 }
 
 /* 반응형 디자인 */

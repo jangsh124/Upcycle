@@ -5,7 +5,7 @@ export default function ProfileEditModal({ user, onClose, onSave }) {
   const [name, setName] = useState(user.name || "");
   const [bio, setBio] = useState(user.bio || "");
   const [previewImage, setPreviewImage] = useState(
-    user.profileImage ? `http://localhost:5001${user.profileImage}` : "/default-profile.png"
+            user.profileImage ? `${user.profileImage}` : "/default-profile.png"
   );
   const [selectedFile, setSelectedFile] = useState(null);
 

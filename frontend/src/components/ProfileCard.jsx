@@ -6,7 +6,7 @@ export default function ProfileCard({ user, onEditClick }) {
   const getImageSrc = () => {
     if (!user.profileImage) return "/default-profile.png";
     if (user.profileImage.startsWith("/uploads")) {
-      return `http://localhost:5001${user.profileImage}`;
+      return `${user.profileImage}`;
     }
     return user.profileImage;
   };

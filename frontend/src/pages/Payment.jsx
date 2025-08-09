@@ -1,110 +1,295 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
-import { useParams, useLocation, useNavigate } from "react-router-dom";
-import "./Payment.css";
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import axios from 'axios';
+import './Payment.css';
 
-const KRW_TO_USDC = 1300;
-
-export default function Payment() {
+const Payment = () => {
   const { id } = useParams();
-  const { search } = useLocation();
   const navigate = useNavigate();
-  const quantity = parseInt(new URLSearchParams(search).get("quantity"), 10) || 1;
-
+  const location = useLocation();
   const [product, setProduct] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [buyerName, setBuyerName] = useState("");
-  const [buyerAddress, setBuyerAddress] = useState("");
-  const [buyerPhone, setBuyerPhone] = useState("");
-  const [buyerEmail, setBuyerEmail] = useState("");
-  const [walletAddress, setWalletAddress] = useState("");
-  const [selectedToken, setSelectedToken] = useState("usdc");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState('card');
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardExpiryMonth, setCardExpiryMonth] = useState('');
+  const [cardExpiryYear, setCardExpiryYear] = useState('');
+  const [cardCVC, setCardCVC] = useState('');
+  const [cardHolderName, setCardHolderName] = useState('');
+  const [processing, setProcessing] = useState(false);
 
-  useEffect(() => {
-    axios
-      .get(`/products/${id}`)
-      .then((res) => setProduct(res.data))
-      .catch(() => {
-        alert("상품 정보를 불러오지 못했습니다.");
-        navigate(-1);
-      });
-  }, [id, navigate]);
+  // URL에서 수량 파라미터 가져오기
+  const searchParams = new URLSearchParams(location.search);
+  const quantity = parseInt(searchParams.get('quantity')) || 1;
+  
+  // 디버깅: URL 파라미터 확인
+  console.log('🔍 URL 파라미터 확인:', {
+    search: location.search,
+    quantity: searchParams.get('quantity'),
+    parsedQuantity: quantity
+  });
 
-  const handlePayment = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      alert("로그인이 필요합니다.");
-      navigate("/login");
-      return;
+  // 카드번호 포맷팅 함수
+  const formatCardNumber = (value) => {
+    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    const matches = v.match(/\d{4,16}/g);
+    const match = matches && matches[0] || '';
+    const parts = [];
+    for (let i = 0, len = match.length; i < len; i += 4) {
+      parts.push(match.substring(i, i + 4));
     }
-
-    if (!buyerName || !buyerAddress || !buyerPhone || !walletAddress) {
-      alert("필수 정보를 모두 입력해주세요.");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await axios.post(
-        `/products/${id}/purchase`,
-        {
-          quantity,
-          name: buyerName,
-          address: buyerAddress,
-          phone: buyerPhone,
-          email: buyerEmail,
-          wallet: walletAddress,
-          paymentToken: selectedToken,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      alert("구매 완료");
-      navigate(`/products/${id}`);
-    } catch (err) {
-      alert(err.response?.data?.error || "구매 실패");
-      setLoading(false);
+    if (parts.length) {
+      return parts.join('-');
+    } else {
+      return v;
     }
   };
 
-  if (!product) return <div className="payment-loading">로딩 중…</div>;
+  // 카드번호 입력 핸들러
+  const handleCardNumberChange = (e) => {
+    const formatted = formatCardNumber(e.target.value);
+    setCardNumber(formatted);
+  };
 
-  const totalPrice = product.tokenPrice * quantity;
-  const usdcAmount = (totalPrice / KRW_TO_USDC).toFixed(2);
+  // 월 옵션 생성
+  const monthOptions = Array.from({ length: 12 }, (_, i) => {
+    const month = i + 1;
+    return { value: month.toString().padStart(2, '0'), label: month.toString().padStart(2, '0') };
+  });
+
+  // 년도 옵션 생성 (현재 년도부터 10년)
+  const currentYear = new Date().getFullYear();
+  const yearOptions = Array.from({ length: 10 }, (_, i) => {
+    const year = currentYear + i;
+    return { value: year.toString(), label: year.toString() };
+  });
+
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const response = await axios.get(`/api/products/${id}`);
+        setProduct(response.data);
+      } catch (err) {
+        setError('상품 정보를 불러오는데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [id]);
+
+  const handleCardPayment = async () => {
+    if (!cardNumber || !cardExpiryMonth || !cardExpiryYear || !cardCVC || !cardHolderName) {
+      alert('모든 카드 정보를 입력해주세요.');
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('로그인이 필요합니다.');
+        navigate('/login');
+        return;
+      }
+
+      // 주문 정보 생성 - 판매 지분에 따른 개당 가격 계산
+      const totalSaleAmount = product.price * (product.sharePercentage / 100);
+      // shareQuantity가 0이면 sharePercentage * 1000으로 계산 (0.001% 단위)
+      const totalQuantity = product.shareQuantity || (product.sharePercentage * 1000);
+      const unitPrice = Math.round(totalSaleAmount / totalQuantity);
+      
+      const orderData = {
+        productId: id,
+        type: 'buy',
+        price: unitPrice, // 개당 가격
+        quantity: quantity,
+        paymentMethod: 'card',
+        cardNumber: cardNumber.replace(/\s/g, '').slice(-4), // 마지막 4자리만 저장
+        cardHolderName: cardHolderName
+      };
+      
+      const response = await axios.post('/api/orders', orderData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data.success) {
+        alert('카드 결제가 완료되었습니다!');
+        navigate(`/products/${id}`);
+      }
+    } catch (err) {
+      console.error('카드 결제 실패:', err);
+      alert('카드 결제에 실패했습니다.');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleCancel = () => {
+    navigate(`/products/${id}`);
+  };
+
+  if (loading) return <div className="payment-loading">로딩 중...</div>;
+  if (error) return <div className="payment-loading">{error}</div>;
+  if (!product) return <div className="payment-loading">상품을 찾을 수 없습니다.</div>;
+
+  // 판매 지분에 따른 개당 가격 계산
+  const totalSaleAmount = product.price * (product.sharePercentage / 100);
+  // shareQuantity가 0이면 sharePercentage * 1000으로 계산 (0.001% 단위)
+  const totalQuantity = product.shareQuantity || (product.sharePercentage * 1000);
+  const unitPrice = Math.round(totalSaleAmount / totalQuantity);
+  const totalAmount = unitPrice * quantity;
 
   return (
     <div className="payment-wrapper">
       {/* 왼쪽 영역 */}
       <div className="payment-left">
-        <h2>배송 및 결제 정보</h2>
-        <input type="text" placeholder="이름" value={buyerName} onChange={(e) => setBuyerName(e.target.value)} />
-        <input type="text" placeholder="주소" value={buyerAddress} onChange={(e) => setBuyerAddress(e.target.value)} />
-        <input type="text" placeholder="전화번호" value={buyerPhone} onChange={(e) => setBuyerPhone(e.target.value)} />
-        <input type="email" placeholder="이메일 (선택)" value={buyerEmail} onChange={(e) => setBuyerEmail(e.target.value)} />
-        <input type="text" placeholder="지갑 주소 (0x...)" value={walletAddress} onChange={(e) => setWalletAddress(e.target.value)} />
+        <h2>💳 결제 방법 선택</h2>
         
-        <label className="payment-label">결제 토큰 선택:</label>
-        <select value={selectedToken} onChange={(e) => setSelectedToken(e.target.value)} className="token-select">
-          <option value="usdc">USDC</option>
-          <option value="eth">ETH</option>
-          <option value="klay">KLAY</option>
-        </select>
+        <div className="payment-methods">
+          <div className="method-buttons">
+            <button 
+              className={`method-btn ${paymentMethod === 'card' ? 'active' : ''}`}
+              onClick={() => setPaymentMethod('card')}
+            >
+              💳 카드 결제
+            </button>
+            <button 
+              className={`method-btn ${paymentMethod === 'crypto' ? 'active' : 'coming-soon'}`}
+              onClick={() => setPaymentMethod('crypto')}
+            >
+              ₿ 암호화폐 결제
+            </button>
+          </div>
+        </div>
 
-        <button className="pay-button" onClick={handlePayment} disabled={loading}>
-          {loading ? "결제 처리 중..." : "크립토로 결제하기"}
-        </button>
-        <p className="money-back">💸 30일 환불 보장</p>
+        {paymentMethod === 'card' && (
+          <div className="card-payment-form">
+            <h3>카드 정보 입력</h3>
+            <div className="form-group">
+              <label>카드 소유자명:</label>
+              <input
+                type="text"
+                value={cardHolderName}
+                onChange={(e) => setCardHolderName(e.target.value)}
+                placeholder="홍길동"
+                maxLength="50"
+              />
+            </div>
+            <div className="form-group">
+              <label>카드 번호:</label>
+              <input
+                type="text"
+                value={cardNumber}
+                onChange={handleCardNumberChange}
+                placeholder="1234-5678-9012-3456"
+                maxLength="19"
+              />
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>만료 월:</label>
+                <select
+                  value={cardExpiryMonth}
+                  onChange={(e) => setCardExpiryMonth(e.target.value)}
+                  className="expiry-select"
+                >
+                  <option value="">월 선택</option>
+                  {monthOptions.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>만료 년도:</label>
+                <select
+                  value={cardExpiryYear}
+                  onChange={(e) => setCardExpiryYear(e.target.value)}
+                  className="expiry-select"
+                >
+                  <option value="">년도 선택</option>
+                  {yearOptions.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="form-group">
+              <label>CVC:</label>
+              <input
+                type="text"
+                value={cardCVC}
+                onChange={(e) => setCardCVC(e.target.value)}
+                placeholder="123"
+                maxLength="3"
+              />
+            </div>
+            <button 
+              className="pay-button" 
+              onClick={handleCardPayment}
+              disabled={processing}
+            >
+              {processing ? '처리 중...' : '카드로 결제하기'}
+            </button>
+            <p className="money-back">💸 30일 환불 보장</p>
+          </div>
+        )}
+
+        {paymentMethod === 'crypto' && (
+          <div className="crypto-payment-form">
+            <div className="coming-soon-container">
+              <div className="coming-soon-icon">🚧</div>
+              <h3>Coming Soon</h3>
+              <p className="coming-soon-text">
+                암호화폐 결제 기능이 곧 출시됩니다!
+              </p>
+              <p className="coming-soon-desc">
+                Bitcoin, Ethereum, USDT 등 다양한 암호화폐로 결제할 수 있는 기능을 준비 중입니다.
+              </p>
+              <button 
+                className="method-btn"
+                onClick={() => setPaymentMethod('card')}
+              >
+                💳 카드 결제로 돌아가기
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="payment-actions">
+          <button className="payment-btn cancel" onClick={handleCancel}>
+            취소
+          </button>
+        </div>
       </div>
 
       {/* 오른쪽 영역 */}
       <div className="payment-summary">
         <h3>🧾 주문 요약</h3>
-        <p><strong>{product.title}</strong></p>
-        <p>수량: {quantity}</p>
-        <p>가격: {totalPrice.toLocaleString()} 원</p>
-        <p>환산가: ≈ {usdcAmount} USDC</p>
+        <p><strong>{product.title || product.name}</strong></p>
+        <p>수량: {quantity.toLocaleString()}개</p>
+        <p>가격: {unitPrice.toLocaleString()}원</p>
         <hr />
-        <p className="total-price">총 결제 금액: <strong>{usdcAmount} {selectedToken.toUpperCase()}</strong></p>
+        <p className="total-price">총 결제 금액: <strong>{totalAmount.toLocaleString()}원</strong></p>
+        
+        {/* 결제 안내 */}
+        <div className="payment-info">
+          <h4>💡 결제 안내</h4>
+          <ul>
+            <li>• 안전한 SSL 암호화 결제</li>
+            <li>• 3D Secure 인증 지원</li>
+            <li>• 즉시 결제 처리</li>
+            <li>• 30일 환불 보장</li>
+          </ul>
+        </div>
       </div>
     </div>
   );
-}
+};
+
+export default Payment;

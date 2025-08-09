@@ -25,7 +25,7 @@ export default function MyPage() {
       }
       try {
         const res = await axios.get(
-          "http://localhost:5001/api/user/me",
+          "/api/user/me",
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const data = res.data.user || res.data;
@@ -46,7 +46,7 @@ export default function MyPage() {
       if (!token) return;
       try {
         const res = await axios.get(
-          "http://localhost:5001/api/products/my",
+          "/api/products/my",
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const prods = Array.isArray(res.data.products)
@@ -82,7 +82,7 @@ export default function MyPage() {
       const walletAddress = accounts[0];
       const token = localStorage.getItem("token");
       await axios.patch(
-        "http://localhost:5001/api/user/wallet",
+        "/api/user/wallet",
         { walletAddress },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -100,7 +100,7 @@ export default function MyPage() {
     try {
       const token = localStorage.getItem("token");
       const res = await axios.patch(
-        "http://localhost:5001/api/user/profile",
+        "/api/user/profile",
         formData,
         {
           headers: {

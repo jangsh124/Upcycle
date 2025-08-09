@@ -1,5 +1,7 @@
 // ── backend/services/orderBook.js ──
 const OrderModel = require('../model/Order');
+const HoldingModel = require('../model/Holding');
+const ProductModel = require('../model/Product');
 
 class OrderBook {
   constructor() {
@@ -14,27 +16,181 @@ class OrderBook {
   }
 
   // ① 주문 추가: 매칭 로직까지 async/await 처리
-  async addOrder({ productId, side, price, quantity, orderId }) {
+  async addOrder({ productId, side, price, quantity, orderId, userId }) {
     console.log(`📝 주문 추가: ${side} ${price}원 x ${quantity}개 (주문ID: ${orderId})`);
     
     const { bids, asks } = this._initBook(productId);
-    const list = side === 'buy' ? bids : asks;
     
-    // 새 주문 추가
-    const newOrder = { 
-      price, 
-      quantity, 
-      filled: 0, 
-      orderId, 
-      timestamp: Date.now(),
-      side 
-    };
-    list.push(newOrder);
+    // 매수 주문인 경우 즉시 매도 물량과 체결
+    if (side === 'buy') {
+      console.log(`🔄 매수 주문: 즉시 매도 물량과 체결 시도`);
+      
+      // 매도 물량이 없으면 기본 매도 호가 생성
+      if (asks.length === 0) {
+        console.log(`📝 기본 매도 호가 생성 중...`);
+        try {
+          const product = await ProductModel.findById(productId);
+          if (product && product.sharePercentage > 0) {
+            const totalSaleAmount = product.price * (product.sharePercentage / 100);
+            const unitCount = Math.round(product.sharePercentage * 1000); // 0.001% 단위
+            const unitPrice = unitCount > 0 ? Math.round(totalSaleAmount / unitCount) : 0;
+            
+            if (unitPrice > 0 && unitCount > 0) {
+              // 기본 매도 호가 생성
+              const defaultAskOrder = {
+                price: unitPrice,
+                quantity: unitCount,
+                filled: 0,
+                orderId: `default_${productId}`,
+                timestamp: Date.now(),
+                side: 'sell'
+              };
+              
+              asks.push(defaultAskOrder);
+              console.log(`📝 기본 매도 호가 생성: ${unitPrice}원 x ${unitCount}개`);
+            }
+          }
+        } catch (error) {
+          console.error(`❌ 기본 매도 호가 생성 실패: ${error.message}`);
+          return [];
+        }
+      }
+      
+      // 🆕 매수 가격을 최저 매도 가격으로 자동 설정
+      const lowestAskPrice = Math.min(...asks.map(ask => ask.price));
+      console.log(`🔄 매수 가격을 최저 매도 가격(${lowestAskPrice}원)으로 자동 설정`);
+      
+      // 매수 가격을 최저 매도 가격으로 강제 설정
+      price = lowestAskPrice;
+      
+      // 매수 주문을 메모리북에 추가
+      const buyOrder = { 
+        price, 
+        quantity, 
+        filled: 0, 
+        orderId, 
+        timestamp: Date.now(),
+        side: 'buy'
+      };
+      bids.push(buyOrder);
+      
+      // 즉시 체결 로직
+      const matches = await this.executeImmediateBuy(productId, price, quantity, orderId, userId);
+      return matches;
+    } else {
+      // 매도 주문은 기존 로직 유지
+      const list = asks;
+      
+      // 새 주문 추가
+      const newOrder = { 
+        price, 
+        quantity, 
+        filled: 0, 
+        orderId, 
+        timestamp: Date.now(),
+        side 
+      };
+      list.push(newOrder);
+      
+      console.log(`✅ 매도 주문 추가 완료: ${price}원 x ${quantity}개`);
+      
+      // 체결 시도
+      const matches = await this.matchOrders(productId);
+      return matches;
+    }
+  }
+
+  // 🆕 즉시 매수 체결 로직
+  async executeImmediateBuy(productId, buyPrice, buyQuantity, buyOrderId, userId) {
+    const { asks } = this._initBook(productId);
+    const matches = [];
+    let remainingBuyQuantity = buyQuantity;
     
-    console.log(`✅ 주문 추가 완료: ${side} ${price}원 x ${quantity}개`);
+    console.log(`🔄 즉시 매수 체결 시작: ${buyPrice}원 x ${buyQuantity}개`);
     
-    // 체결 시도
-    const matches = await this.matchOrders(productId);
+    // 매도 물량을 가격 순으로 정렬 (낮은 가격부터)
+    const sortedAsks = [...asks].sort((a, b) => a.price - b.price);
+    
+    for (const ask of sortedAsks) {
+      if (remainingBuyQuantity <= 0) break;
+      
+      const availableQuantity = ask.quantity - ask.filled;
+      if (availableQuantity <= 0) continue;
+      
+      const execQuantity = Math.min(remainingBuyQuantity, availableQuantity);
+      const execPrice = ask.price; // 매도가 기준으로 체결
+      
+      console.log(`💥 즉시 체결: ${execPrice}원 x ${execQuantity}개 (매수: ${buyOrderId}, 매도: ${ask.orderId})`);
+      
+      // 체결 내역 저장
+      matches.push({
+        price: execPrice,
+        quantity: execQuantity,
+        buyOrderId: buyOrderId,
+        sellOrderId: ask.orderId,
+        timestamp: Date.now()
+      });
+      
+      // 매도 물량 업데이트
+      ask.filled += execQuantity;
+      remainingBuyQuantity -= execQuantity;
+      
+      // DB 업데이트
+      try {
+        await OrderModel.findOneAndUpdate(
+          { orderId: ask.orderId },
+          {
+            $inc: { remainingQuantity: -execQuantity },
+            $set: { status: ask.filled >= ask.quantity ? 'filled' : 'partial' }
+          }
+        );
+        
+        // 🆕 직접 holdings 업데이트 (매수자 정보 사용)
+        if (userId) {
+          console.log(`🔄 매수자 holdings 업데이트: ${userId} -> ${execQuantity}개`);
+          await this.updateUserHolding(userId, productId, execQuantity, execPrice, 'buy');
+        } else {
+          console.error(`❌ 매수자 정보가 없음: ${buyOrderId}`);
+        }
+      } catch (error) {
+        console.error(`❌ DB 업데이트 실패: ${error.message}`);
+      }
+    }
+    
+    // 매수 주문 DB 저장 (체결된 수량만큼)
+    const filledQuantity = buyQuantity - remainingBuyQuantity;
+    if (filledQuantity > 0) {
+      try {
+        // 매수자 정보를 가져오기 위해 주문 ID에서 추출
+        const buyOrder = await OrderModel.findOne({ orderId: buyOrderId });
+        const userId = buyOrder ? buyOrder.userId : null;
+        
+        if (!userId) {
+          console.error(`❌ 매수자 정보를 찾을 수 없음: ${buyOrderId}`);
+          return matches;
+        }
+        
+        // 이미 존재하는 주문인지 확인
+        const existingOrder = await OrderModel.findOne({ orderId: buyOrderId });
+        if (!existingOrder) {
+          await OrderModel.create({
+            orderId: buyOrderId,
+            userId,
+            productId,
+            type: 'buy',
+            price: buyPrice,
+            quantity: buyQuantity,
+            remainingQuantity: remainingBuyQuantity,
+            status: remainingBuyQuantity > 0 ? 'partial' : 'filled'
+          });
+          console.log(`✅ 매수 주문 DB 저장 완료: ${buyOrderId}`);
+        }
+      } catch (error) {
+        console.error(`❌ 매수 주문 DB 저장 실패: ${error.message}`);
+      }
+    }
+    
+    console.log(`✅ 즉시 매수 체결 완료: ${matches.length}건 체결, 남은 수량: ${remainingBuyQuantity}개`);
     return matches;
   }
 
@@ -90,6 +246,9 @@ class OrderBook {
             $set: { status: ask.filled >= ask.quantity ? 'filled' : 'partial' }
           }
         );
+        
+        // 🆕 보유 지분 업데이트
+        await this.updateHoldings(bid.orderId, ask.orderId, execQty, execPrice);
       } catch (error) {
         console.error(`❌ DB 업데이트 실패: ${error.message}`);
       }
@@ -110,28 +269,97 @@ class OrderBook {
   }
 
   // ③ 주문장 조회: 남은 수량 포함해 반환
-  getBook(productId) {
+  async getBook(productId) {
     const { bids = [], asks = [] } = this.books[productId] || {};
+    
+    console.log(`📊 호가창 조회: 매수 ${bids.length}개, 매도 ${asks.length}개`);
     
     // 가격별로 수량 집계
     const bidMap = new Map();
     const askMap = new Map();
     
-    bids.forEach(order => {
-      const remaining = order.quantity - order.filled;
-      if (remaining > 0) {
-        bidMap.set(order.price, (bidMap.get(order.price) || 0) + remaining);
-      }
-    });
+    // 🆕 매수 주문은 호가창에 표시하지 않음 (보유 지분으로만 표시)
+    // bids.forEach(order => {
+    //   const remaining = order.quantity - order.filled;
+    //   if (remaining > 0) {
+    //     bidMap.set(order.price, (bidMap.get(order.price) || 0) + remaining);
+    //     console.log(`📈 매수 호가: ${order.price}원 x ${remaining}개 (주문ID: ${order.orderId})`);
+    //   }
+    // });
     
+    // 매도 주문들 중 남은 수량이 있는 것만 집계
     asks.forEach(order => {
       const remaining = order.quantity - order.filled;
       if (remaining > 0) {
         askMap.set(order.price, (askMap.get(order.price) || 0) + remaining);
+        console.log(`📉 매도 호가: ${order.price}원 x ${remaining}개 (주문ID: ${order.orderId})`);
       }
     });
     
-    return {
+    // 매도 호가가 없을 때 기본 매도 호가 생성
+    if (askMap.size === 0) {
+      try {
+        const product = await ProductModel.findById(productId);
+        if (product && product.sharePercentage > 0) {
+          const totalSaleAmount = product.price * (product.sharePercentage / 100);
+          const totalUnitCount = Math.round(product.sharePercentage * 1000); // 0.001% 단위
+          const unitPrice = totalUnitCount > 0 ? Math.round(totalSaleAmount / totalUnitCount) : 0;
+          
+          if (unitPrice > 0 && totalUnitCount > 0) {
+            // 🆕 데이터베이스에서 실제 매수된 총 수량 조회
+            let soldQuantity = 0;
+            
+            try {
+              // 모든 사용자의 해당 상품 보유 수량 합계 조회
+              const totalHoldings = await HoldingModel.find({ productId: productId });
+              soldQuantity = totalHoldings.reduce((sum, holding) => sum + holding.quantity, 0);
+              
+              console.log(`📊 데이터베이스에서 조회한 총 매수 수량: ${soldQuantity}개`);
+            } catch (dbError) {
+              console.error(`❌ 매수 수량 조회 실패: ${dbError.message}`);
+              // 데이터베이스 조회 실패 시 기존 로직 사용
+              const existingDefaultAsk = this.books[productId]?.asks?.find(ask => ask.orderId === `default_${productId}`);
+              if (existingDefaultAsk) {
+                soldQuantity = existingDefaultAsk.filled;
+              }
+            }
+            
+            // 남은 매도 수량 계산
+            const remainingQuantity = totalUnitCount - soldQuantity;
+            
+            if (remainingQuantity > 0) {
+              // 기본 매도 호가를 실제 주문장에 추가
+              const defaultAskOrder = {
+                price: unitPrice,
+                quantity: totalUnitCount, // 전체 수량
+                filled: soldQuantity, // 매수된 수량
+                orderId: `default_${productId}`,
+                timestamp: Date.now(),
+                side: 'sell'
+              };
+              
+              // 주문장에 기본 매도 호가 추가 (기존 것 교체)
+              if (!this.books[productId]) {
+                this.books[productId] = { bids: [], asks: [] };
+              }
+              
+              // 기존 기본 매도 호가 제거
+              this.books[productId].asks = this.books[productId].asks.filter(ask => ask.orderId !== `default_${productId}`);
+              
+              // 새로운 기본 매도 호가 추가
+              this.books[productId].asks.push(defaultAskOrder);
+              
+              askMap.set(unitPrice, remainingQuantity);
+              console.log(`📝 기본 매도 호가 생성: ${unitPrice}원 x ${remainingQuantity}개 (전체: ${totalUnitCount}개, 매수됨: ${soldQuantity}개)`);
+            }
+          }
+        }
+      } catch (error) {
+        console.error(`❌ 기본 매도 호가 생성 실패: ${error.message}`);
+      }
+    }
+    
+    const result = {
       bids: Array.from(bidMap.entries())
         .sort(([a], [b]) => b - a) // 매수는 높은 가격부터
         .map(([price, quantity]) => ({ price, quantity })),
@@ -139,6 +367,69 @@ class OrderBook {
         .sort(([a], [b]) => a - b) // 매도는 낮은 가격부터
         .map(([price, quantity]) => ({ price, quantity }))
     };
+    
+    console.log(`✅ 호가창 결과: 매수 ${result.bids.length}개, 매도 ${result.asks.length}개`);
+    return result;
+  }
+
+  // 🆕 보유 지분 업데이트
+  async updateHoldings(buyOrderId, sellOrderId, quantity, price) {
+    try {
+      // 매수/매도 주문 정보 조회
+      const buyOrder = await OrderModel.findOne({ orderId: buyOrderId });
+      const sellOrder = await OrderModel.findOne({ orderId: sellOrderId });
+      
+      if (!buyOrder || !sellOrder) {
+        console.error('❌ 주문 정보를 찾을 수 없음');
+        return;
+      }
+      
+      // 매수자 보유 지분 증가
+      await this.updateUserHolding(buyOrder.userId, buyOrder.productId, quantity, price, 'buy');
+      
+      // 매도자 보유 지분 감소
+      await this.updateUserHolding(sellOrder.userId, sellOrder.productId, quantity, price, 'sell');
+      
+      console.log(`✅ 보유 지분 업데이트 완료: ${quantity}개 x ${price}원`);
+    } catch (error) {
+      console.error(`❌ 보유 지분 업데이트 실패: ${error.message}`);
+    }
+  }
+  
+  // 🆕 사용자 보유 지분 업데이트
+  async updateUserHolding(userId, productId, quantity, price, type) {
+    try {
+      let holding = await HoldingModel.findOne({ userId, productId });
+      
+      if (!holding) {
+        // 새로운 보유 지분 생성
+        holding = new HoldingModel({
+          userId,
+          productId,
+          quantity: type === 'buy' ? quantity : 0,
+          averagePrice: type === 'buy' ? price : 0
+        });
+      } else {
+        // 기존 보유 지분 업데이트
+        if (type === 'buy') {
+          // 매수: 수량 증가, 평균가 계산
+          const totalValue = holding.quantity * holding.averagePrice + quantity * price;
+          holding.quantity += quantity;
+          holding.averagePrice = totalValue / holding.quantity;
+        } else {
+          // 매도: 수량 감소
+          holding.quantity = Math.max(0, holding.quantity - quantity);
+          if (holding.quantity === 0) {
+            holding.averagePrice = 0;
+          }
+        }
+      }
+      
+      await holding.save();
+      console.log(`✅ ${type === 'buy' ? '매수' : '매도'}자 보유 지분 업데이트: ${quantity}개`);
+    } catch (error) {
+      console.error(`❌ 사용자 보유 지분 업데이트 실패: ${error.message}`);
+    }
   }
 
   // ④ 주문 취소

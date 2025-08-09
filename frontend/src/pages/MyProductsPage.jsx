@@ -16,7 +16,7 @@ export default function MyProductsPage() {
     }
 
     axios
-      .get("http://localhost:5001/api/products/my", {
+              .get("/api/products/my", {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then(res => {
