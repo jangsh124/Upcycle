@@ -1,4 +1,5 @@
 // ── backend/controllers/orderController.js ──
+const mongoose  = require('mongoose');
 const OrderBook = require('../services/orderBook');
 const Order     = require('../model/Order');
 const Product   = require('../model/Product');
@@ -58,14 +59,16 @@ exports.addOrder = async (req, res) => {
             });
           }
         }
-        // 보유 수량 및 이미 등록된 미체결 매도 주문 합계 확인
+        // 보유 수량 및 이미 등록된 미체결 매도 주문 합계 확인 (안전한 방식)
         const holding = await Holding.findOne({ userId, productId });
         const ownedQuantity = holding?.quantity || 0;
-        const openSells = await Order.aggregate([
-          { $match: { userId: Order.db.castObjectId(userId), productId: Order.db.castObjectId(productId), type: 'sell', remainingQuantity: { $gt: 0 } } },
-          { $group: { _id: null, total: { $sum: '$remainingQuantity' } } }
-        ]);
-        const alreadyListed = openSells?.[0]?.total || 0;
+        const openSellDocs = await Order.find({
+          userId,
+          productId,
+          type: 'sell',
+          remainingQuantity: { $gt: 0 }
+        }).select('remainingQuantity').lean();
+        const alreadyListed = openSellDocs.reduce((sum, doc) => sum + (doc.remainingQuantity || 0), 0);
         const availableToSell = Math.max(0, ownedQuantity - alreadyListed);
         if (quantity > availableToSell) {
           return res.status(400).json({ 
@@ -73,8 +76,8 @@ exports.addOrder = async (req, res) => {
           });
         }
       } catch (error) {
-        console.error('❌ 상품 정보 조회 실패:', error);
-        return res.status(500).json({ error: '상품 정보 조회 실패' });
+        console.error('❌ 매도 검증 실패:', error);
+        return res.status(500).json({ error: '매도 검증 실패' });
       }
     }
 
