@@ -2,6 +2,7 @@
 const OrderBook = require('../services/orderBook');
 const Order     = require('../model/Order');
 const Product   = require('../model/Product');
+const Holding   = require('../model/Holding');
 
 // 주문장 조회: 메모리북에서 가져와 JSON 반환
 exports.getBook = async (req, res) => {
@@ -39,6 +40,11 @@ exports.addOrder = async (req, res) => {
 
     // 판매 주문인 경우 판매자 설정 가격 이하로 판매 불가
     if (side === 'sell') {
+      // 최소 가격 강제 (서버 신뢰)
+      if (price < 100) {
+        return res.status(400).json({ error: '매도 가격은 100원 이상이어야 합니다' });
+      }
+
       try {
         const product = await Product.findById(productId);
         if (product && product.sharePercentage > 0) {
@@ -51,6 +57,20 @@ exports.addOrder = async (req, res) => {
               error: `판매 가격은 ${unitPrice}원 이상이어야 합니다. 현재 가격: ${price}원` 
             });
           }
+        }
+        // 보유 수량 및 이미 등록된 미체결 매도 주문 합계 확인
+        const holding = await Holding.findOne({ userId, productId });
+        const ownedQuantity = holding?.quantity || 0;
+        const openSells = await Order.aggregate([
+          { $match: { userId: Order.db.castObjectId(userId), productId: Order.db.castObjectId(productId), type: 'sell', remainingQuantity: { $gt: 0 } } },
+          { $group: { _id: null, total: { $sum: '$remainingQuantity' } } }
+        ]);
+        const alreadyListed = openSells?.[0]?.total || 0;
+        const availableToSell = Math.max(0, ownedQuantity - alreadyListed);
+        if (quantity > availableToSell) {
+          return res.status(400).json({ 
+            error: `보유 지분 ${ownedQuantity}개 중 이미 판매 등록 ${alreadyListed}개가 있어, 추가로 ${availableToSell}개까지만 매도 등록 가능합니다.`
+          });
         }
       } catch (error) {
         console.error('❌ 상품 정보 조회 실패:', error);

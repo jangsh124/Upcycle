@@ -275,6 +275,12 @@ export default function OrderBook({ productId, product }) {
         return `최대 매수가는 ${maxBuyPrice.toLocaleString()}원입니다`;
       }
     } else if (orderForm.side === 'sell') {
+      // 보유 지분 초과 매도 방지(프론트 가드)
+      const q = parseFloat(orderForm.quantity);
+      const maxSellable = userHolding.quantity;
+      if (!isNaN(q) && q > maxSellable) {
+        return `보유 지분 ${maxSellable.toLocaleString()}개를 초과하여 판매할 수 없습니다`;
+      }
       // 🆕 매도 가격 제한: 100원 이상만 가능
       if (inputPrice < 100) {
         return `매도 가격은 100원 이상이어야 합니다`;
