@@ -446,16 +446,6 @@ export default function OrderBook({ productId, product }) {
       )}
 
       {/* 주문 폼 */}
-      {/* 🆕 주문 가능 요약을 주문 폼 위로 이동 */}
-      <div className="order-availability">
-        <div>보유 지분: <strong>{(sellSummary.totalHolding || userHolding.quantity).toLocaleString()}</strong>개</div>
-        <div>이미 매도 등록: <strong>{(sellSummary.openSellQuantity || 0).toLocaleString()}</strong>개</div>
-        <div>추가 매도 가능 수량: <strong>{(sellSummary.availableToSell || Math.max(0, userHolding.quantity)).toLocaleString()}</strong>개</div>
-        {orderBookData.asks.length > 0 && (
-          <div>최저 매도가(기준): <strong>{orderBookData.asks[0].price.toLocaleString()}원</strong></div>
-        )}
-      </div>
-
       <div className="order-form">
         <h3>주문하기</h3>
         <div className="form-group">
