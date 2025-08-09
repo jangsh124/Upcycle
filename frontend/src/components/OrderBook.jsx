@@ -341,6 +341,17 @@ export default function OrderBook({ productId, product }) {
     return units.toLocaleString(); // 0.001% 단위 개수로 표시
   };
 
+  // 🆕 최저 매도가 및 판매 가능/추정 총액 계산
+  const minAskPrice = orderBookData.asks.length > 0 ? orderBookData.asks[0].price : 0;
+  const availableToSellCount = (sellSummary.availableToSell || Math.max(0, userHolding.quantity)) || 0;
+  const sellAvailableKRW = minAskPrice * availableToSellCount;
+  const estimatedOrderTotal = minAskPrice * (parseFloat(orderForm.quantity) || 0);
+
+  const setPercentQuantity = (ratio) => {
+    const q = Math.floor(availableToSellCount * ratio);
+    handleQuantityChange(String(q));
+  };
+
   return (
     <div className="order-book-container">
       <div className="order-book-header">
@@ -404,7 +415,7 @@ export default function OrderBook({ productId, product }) {
         </div>
       </div>
 
-      {/* 가격 제한 정보 */
+      {/* 가격 제한 정보 */}
       {orderBookData.asks.length > 0 && (
         <div className="price-limit-info">
           <div className="limit-item">
@@ -448,6 +459,18 @@ export default function OrderBook({ productId, product }) {
       {/* 주문 폼 */}
       <div className="order-form">
         <h3>주문하기</h3>
+        {orderForm.side === 'sell' && (
+          <div className="sell-available-row">
+            <div className="sell-available-label">판매 가능:</div>
+            <div className="sell-available-value">
+              <strong>{availableToSellCount.toLocaleString()}</strong>개
+              <span className="approx"> ≈ {sellAvailableKRW.toLocaleString()}원</span>
+              {minAskPrice > 0 && (
+                <span className="basis"> (최저가 {minAskPrice.toLocaleString()}원 기준)</span>
+              )}
+            </div>
+          </div>
+        )}
         <div className="form-group">
           <label>주문 유형:</label>
           <div className="order-type-buttons">
@@ -508,11 +531,24 @@ export default function OrderBook({ productId, product }) {
             className={quantityError ? "error-input" : ""}
           />
           {quantityError && (<div className="error-message">{quantityError}</div>)}
+          {orderForm.side === 'sell' && (
+            <div className="percent-buttons">
+              <button type="button" className="percent-btn" onClick={() => setPercentQuantity(0.1)}>10%</button>
+              <button type="button" className="percent-btn" onClick={() => setPercentQuantity(0.25)}>25%</button>
+              <button type="button" className="percent-btn" onClick={() => setPercentQuantity(0.5)}>50%</button>
+              <button type="button" className="percent-btn" onClick={() => setPercentQuantity(1)}>100%</button>
+            </div>
+          )}
         </div>
 
         <div className="form-group">
           <label>총액:</label>
           <div className="total-amount">{isNaN(orderForm.total) ? '0' : orderForm.total.toLocaleString()}원</div>
+          {orderForm.side === 'sell' && (
+            <div className="price-hint" style={{marginTop: '6px'}}>
+              추정 주문총액: {estimatedOrderTotal.toLocaleString()}원 (최저가 기준)
+            </div>
+          )}
         </div>
 
         <button className="place-order-btn" onClick={placeOrder}>

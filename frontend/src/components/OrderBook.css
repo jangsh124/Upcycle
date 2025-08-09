@@ -321,6 +321,34 @@
   color: #333;
 }
 
+/* 🆕 판매 가능 표시 */
+.sell-available-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 13px;
+}
+.sell-available-row .approx { color: #6b7280; margin-left: 6px; }
+.sell-available-row .basis { color: #9ca3af; margin-left: 6px; }
+
+/* 🆕 퍼센트 버튼 */
+.percent-buttons { display: flex; gap: 8px; margin-top: 8px; }
+.percent-btn {
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #374151;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.percent-btn:hover { background: #f3f4f6; }
+
 .form-group {
   margin-bottom: 15px;
 }
