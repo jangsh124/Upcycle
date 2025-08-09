@@ -58,6 +58,14 @@ exports.addOrder = async (req, res) => {
       }
     }
 
+    // 결제/수수료 재계산 (서버 신뢰)
+    const subtotal = Math.round(price * quantity);
+    const platformFeeRate = 0.01; // 1%
+    const platformFee = Math.max(1, Math.ceil(subtotal * platformFeeRate));
+    const platformFeeVatRate = 0.1; // 10%
+    const platformFeeVat = Math.ceil(platformFee * platformFeeVatRate);
+    const totalAmount = subtotal + platformFee + platformFeeVat;
+
     // 1) DB에 저장
     const order = await Order.create({
       orderId,
@@ -67,7 +75,14 @@ exports.addOrder = async (req, res) => {
       price,
       quantity,
       remainingQuantity: quantity,
-      status: 'open'
+      status: 'open',
+      currency: 'KRW',
+      subtotal,
+      platformFeeRate,
+      platformFee,
+      platformFeeVatRate,
+      platformFeeVat,
+      totalAmount
     });
 
     console.log(`✅ DB 저장 완료: 주문ID ${orderId}`);
@@ -83,7 +98,8 @@ exports.addOrder = async (req, res) => {
       message: 'Order placed successfully',
       orderId,
       matches: matches.length,
-      orderBook: OrderBook.getBook(productId)
+      orderBook: OrderBook.getBook(productId),
+      amounts: { subtotal, platformFee, platformFeeVat, totalAmount }
     };
 
     return res.status(201).json(response);

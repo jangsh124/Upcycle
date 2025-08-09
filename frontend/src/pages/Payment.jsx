@@ -33,7 +33,7 @@ const Payment = () => {
   const formatCardNumber = (value) => {
     const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
     const matches = v.match(/\d{4,16}/g);
-    const match = matches && matches[0] || '';
+    const match = (matches && matches[0]) || '';
     const parts = [];
     for (let i = 0, len = match.length; i < len; i += 4) {
       parts.push(match.substring(i, i + 4));
@@ -100,11 +100,27 @@ const Payment = () => {
       const totalQuantity = product.shareQuantity || (product.sharePercentage * 1000);
       const unitPrice = Math.round(totalSaleAmount / totalQuantity);
       
+      // 수수료(1%) 계산: 원단위 올림, 최소 1원, 수수료 VAT 10% 별도 부과
+      const feeRate = 0.01;
+      const subtotal = unitPrice * quantity;
+      const feeAmount = Math.max(1, Math.ceil(subtotal * feeRate));
+      const feeVatRate = 0.1;
+      const feeVat = Math.ceil(feeAmount * feeVatRate);
+      const totalAmount = subtotal + feeAmount + feeVat;
+      
       const orderData = {
         productId: id,
         type: 'buy',
         price: unitPrice, // 개당 가격
         quantity: quantity,
+        // 결제 요약 정보 포함 (백엔드 사용 여부와 무관하게 전송)
+        subtotal,
+        feeRate,
+        feeAmount,
+        feeVatRate,
+        feeVat,
+        totalAmount,
+        currency: 'KRW',
         paymentMethod: 'card',
         cardNumber: cardNumber.replace(/\s/g, '').slice(-4), // 마지막 4자리만 저장
         cardHolderName: cardHolderName
@@ -139,7 +155,13 @@ const Payment = () => {
   // shareQuantity가 0이면 sharePercentage * 1000으로 계산 (0.001% 단위)
   const totalQuantity = product.shareQuantity || (product.sharePercentage * 1000);
   const unitPrice = Math.round(totalSaleAmount / totalQuantity);
-  const totalAmount = unitPrice * quantity;
+  // 수수료(1%) 계산 및 총 결제금액
+  const feeRate = 0.01;
+  const subtotal = unitPrice * quantity;
+  const feeAmount = Math.max(1, Math.ceil(subtotal * feeRate));
+  const feeVatRate = 0.1;
+  const feeVat = Math.ceil(feeAmount * feeVatRate);
+  const totalAmount = subtotal + feeAmount + feeVat;
 
   return (
     <div className="payment-wrapper">
@@ -273,9 +295,12 @@ const Payment = () => {
         <h3>🧾 주문 요약</h3>
         <p><strong>{product.title || product.name}</strong></p>
         <p>수량: {quantity.toLocaleString()}개</p>
-        <p>가격: {unitPrice.toLocaleString()}원</p>
+        <p>개당 가격: {unitPrice.toLocaleString()}원</p>
+        <p>소계: {subtotal.toLocaleString()}원</p>
+        <p>플랫폼 거래 수수료 (1%): {feeAmount.toLocaleString()}원</p>
+        <p>부가세 (수수료의 10%): {feeVat.toLocaleString()}원</p>
         <hr />
-        <p className="total-price">총 결제 금액: <strong>{totalAmount.toLocaleString()}원</strong></p>
+        <p className="total-price">총 결제 금액 (수수료·부가세 포함): <strong>{totalAmount.toLocaleString()}원</strong></p>
         
         {/* 결제 안내 */}
         <div className="payment-info">
