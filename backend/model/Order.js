@@ -11,7 +11,7 @@ const orderSchema = new mongoose.Schema({
   price:            { type: Number, required: true },
   quantity:         { type: Number, required: true },
   remainingQuantity:{ type: Number, required: true },
-  status:           { type: String, enum: ['open', 'filled', 'cancelled'], default: 'open' },
+  status:           { type: String, enum: ['open', 'processing', 'filled', 'cancelled'], default: 'open' },
 
   // 결제/정산 관련 메타데이터 (플랫폼 수수료 등)
   currency:         { type: String, default: 'KRW' },

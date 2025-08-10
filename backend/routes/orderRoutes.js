@@ -1,6 +1,6 @@
 // ── backend/routes/orderRoutes.js ──
 const express = require('express');
-const { getBook, addOrder, getOpenSellSummary, getOpenSellList, cancelOrder } = require('../controllers/orderController');
+const { getBook, addOrder, getOpenSellSummary, getOpenSellList, cancelOrder, setOrderProcessing } = require('../controllers/orderController');
 const auth = require('../middleware/auth');  // 로그인 검사 미들웨어
 
 const router = express.Router();
@@ -20,6 +20,10 @@ router.get('/open-sell-list/:productId', auth, getOpenSellList);
 // 주문 취소
 // POST /api/orders/:orderId/cancel
 router.post('/:orderId/cancel', auth, cancelOrder);
+
+// 주문 처리 중 상태로 변경 (결제 페이지 진입 시)
+// POST /api/orders/:orderId/processing
+router.post('/:orderId/processing', auth, setOrderProcessing);
 
 // 주문 추가
 // POST /api/orders

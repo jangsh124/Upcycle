@@ -185,22 +185,31 @@ export default function OrderBook({ productId, product }) {
       return;
     }
 
-    // 매수 주문인 경우 결제 페이지로 이동
+    // 매수 주문인 경우 먼저 주문 생성 후 결제 페이지로 이동
     if (orderForm.side === 'buy') {
-      const orderData = {
-        productId,
-        type: orderForm.side,
-        price: parseFloat(orderForm.price),
-        quantity: parseFloat(orderForm.quantity),
-        total: orderForm.total
-      };
-      
-      // 주문 정보를 세션 스토리지에 저장
-      sessionStorage.setItem('pendingOrder', JSON.stringify(orderData));
-      
-      // 결제 페이지로 이동 (수량 파라미터 포함)
-      navigate(`/products/${productId}/payment?quantity=${orderForm.quantity}`);
-      return;
+      try {
+        console.log(`📋 매수 주문 요청: ${orderForm.side} ${orderForm.price}원 x ${orderForm.quantity}개`);
+        
+        const response = await axios.post('/api/orders', {
+          productId,
+          type: orderForm.side,
+          price: parseFloat(orderForm.price),
+          quantity: parseFloat(orderForm.quantity)
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        console.log('✅ 매수 주문 생성 성공:', response.data);
+        
+        // 주문 ID를 포함하여 결제 페이지로 이동
+        navigate(`/products/${productId}/payment?quantity=${orderForm.quantity}&orderId=${response.data.orderId}`);
+        return;
+        
+      } catch (error) {
+        console.error('❌ 매수 주문 생성 실패:', error);
+        alert(`매수 주문 생성 실패: ${error.response?.data?.error || error.message}`);
+        return;
+      }
     }
 
     // 매도 주문은 기존 로직 유지 (즉시 처리)
@@ -587,7 +596,7 @@ export default function OrderBook({ productId, product }) {
                     } catch (e) {
                       alert(e.response?.data?.error || '취소 실패');
                     }
-                  }}>취소</button>
+                  }}>{item.status === 'processing' ? '처리중' : '취소'}</button>
                 </div>
               ))}
             </div>

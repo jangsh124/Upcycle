@@ -83,6 +83,13 @@ exports.cancelOrder = async (req, res) => {
       return res.status(400).json({ error: 'Nothing to cancel' });
     }
 
+    // processing 상태에서는 취소 불가
+    if (order.status === 'processing') {
+      return res.status(400).json({ 
+        error: '결제 진행 중인 주문은 취소할 수 없습니다. 결제를 완료하거나 취소 후 다시 시도해주세요.' 
+      });
+    }
+
     // 경쟁 상태를 피하기 위해 남은 수량이 그대로일 때만 취소되도록 조건부 업데이트
     const prevRemaining = order.remainingQuantity;
     const updated = await Order.findOneAndUpdate(
@@ -227,4 +234,53 @@ exports.addOrder = async (req, res) => {
     console.error('OrderController.addOrder error:', err);
     return res.status(500).json({ error: 'Failed to place order' });
   }
+};
+
+// 주문을 처리 중 상태로 변경 (결제 페이지 진입 시)
+const setOrderProcessing = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const userId = req.user.id;
+
+    console.log(`🔄 주문 처리 중 상태 변경 요청: ${orderId}`);
+
+    // 주문 조회 및 권한 확인
+    const order = await Order.findOne({ orderId, userId });
+    if (!order) {
+      return res.status(404).json({ error: '주문을 찾을 수 없습니다' });
+    }
+
+    // 상태 변경 가능 여부 확인
+    if (order.status !== 'open') {
+      return res.status(400).json({ 
+        error: `현재 상태(${order.status})에서는 처리 중으로 변경할 수 없습니다` 
+      });
+    }
+
+    // 처리 중 상태로 변경
+    order.status = 'processing';
+    await order.save();
+
+    console.log(`✅ 주문 처리 중 상태 변경 완료: ${orderId}`);
+
+    return res.status(200).json({ 
+      success: true, 
+      message: '주문이 처리 중 상태로 변경되었습니다',
+      orderId,
+      status: 'processing'
+    });
+
+  } catch (error) {
+    console.error('❌ 주문 처리 중 상태 변경 실패:', error);
+    return res.status(500).json({ error: '주문 상태 변경에 실패했습니다' });
+  }
+};
+
+module.exports = {
+  getBook,
+  addOrder,
+  getOpenSellSummary,
+  getOpenSellList,
+  cancelOrder,
+  setOrderProcessing
 };

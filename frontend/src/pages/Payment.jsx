@@ -21,12 +21,14 @@ const Payment = () => {
   // URL에서 수량 파라미터 가져오기
   const searchParams = new URLSearchParams(location.search);
   const quantity = parseInt(searchParams.get('quantity')) || 1;
+  const orderId = searchParams.get('orderId');
   
   // 디버깅: URL 파라미터 확인
   console.log('🔍 URL 파라미터 확인:', {
     search: location.search,
     quantity: searchParams.get('quantity'),
-    parsedQuantity: quantity
+    parsedQuantity: quantity,
+    orderId: orderId
   });
 
   // 카드번호 포맷팅 함수
@@ -69,6 +71,19 @@ const Payment = () => {
       try {
         const response = await axios.get(`/api/products/${id}`);
         setProduct(response.data);
+        
+        // 결제 페이지 진입 시 주문을 processing 상태로 변경
+        const token = localStorage.getItem('token');
+        if (token && orderId) {
+          try {
+            await axios.post(`/api/orders/${orderId}/processing`, {}, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            console.log('✅ 주문을 처리 중 상태로 변경했습니다');
+          } catch (error) {
+            console.log('⚠️ 주문 상태 변경 실패 (이미 처리 중이거나 주문이 없음):', error.response?.data?.error || error.message);
+          }
+        }
       } catch (err) {
         setError('상품 정보를 불러오는데 실패했습니다.');
       } finally {
