@@ -277,10 +277,10 @@ const setOrderProcessing = async (req, res) => {
 };
 
 module.exports = {
-  getBook,
-  addOrder,
-  getOpenSellSummary,
-  getOpenSellList,
-  cancelOrder,
+  getBook: exports.getBook,
+  addOrder: exports.addOrder,
+  getOpenSellSummary: exports.getOpenSellSummary,
+  getOpenSellList: exports.getOpenSellList,
+  cancelOrder: exports.cancelOrder,
   setOrderProcessing
 };
