@@ -13,8 +13,6 @@ export default function ProductDetail() {
   const [product, setProduct] = useState(null);
   const [mainImageIndex, setMainImageIndex] = useState(0);
   const [user, setUser] = useState(null);
-  const [purchaseQuantity, setPurchaseQuantity] = useState(1);
-  const [purchased, setPurchased] = useState(0);
 
 
   useEffect(() => {
@@ -38,10 +36,7 @@ export default function ProductDetail() {
         else navigate("/products", { replace: true });
       });
 
-    axios
-      .get(`/api/products/${id}/purchased`)
-      .then((res) => setPurchased(res.data.purchased || 0))
-      .catch(() => setPurchased(0));
+
 
 
   }, [id, navigate]);
@@ -57,39 +52,7 @@ export default function ProductDetail() {
 
   const images = Array.isArray(product.images) ? product.images : [];
 
-  // 토큰 전체 수량이 없으면 tokenSupply, shareQuantity, 1 중 하나로 처리
-  const totalQuantity =
-    product.shareQuantity || product.tokenSupply || 1;
-  const remainingQuantity = totalQuantity - purchased;
-  const remainingPct = totalQuantity
-    ? Math.round((remainingQuantity / totalQuantity) * 100)
-    : 0;
-  const totalCost = purchaseQuantity * (product.unitPrice || 0);
 
-  const handleBuyAll = () => {
-    navigate(`/products/${id}/payment?quantity=${remainingQuantity}`);
-  };
-
-  const handlePurchase = async () => {
-    if (purchaseQuantity < 1 || purchaseQuantity > remainingQuantity) return;
-    const token = localStorage.getItem("token");
-    if (!token) {
-      alert("로그인이 필요합니다.");
-      navigate("/login");
-      return;
-    }
-    
-    // 디버깅: 이동할 URL 확인
-    const paymentUrl = `/products/${id}/payment?quantity=${purchaseQuantity}`;
-    console.log('🔍 ProductDetail - 이동할 URL:', {
-      purchaseQuantity,
-      paymentUrl,
-      currentUrl: window.location.href
-    });
-    
-    // 결제 페이지로 이동
-    navigate(paymentUrl);
-  };
 
   return (
     <div className="product-detail-page">
@@ -163,50 +126,6 @@ export default function ProductDetail() {
         {/* 오른쪽: 오더북 */}
         <div className="product-detail-right">
           <OrderBook productId={id} product={product} />
-
-          {/* 전체 매수 버튼 */}
-          {remainingQuantity > 0 && (
-            <div className="buy-all-section">
-              <p>전체 구매 시 총액: {product.price.toLocaleString()}원</p>
-              <button className="buy-btn" onClick={handleBuyAll}>
-                전체 매수
-              </button>
-            </div>
-          )}
-
-          {/* 수량 지정 매수 섹션 */}
-          {remainingQuantity > 0 && (
-            <div className="token-purchase">
-              <div className="remaining-gauge-container">
-                <div className="remaining-gauge-fill" style={{ width: `${remainingPct}%` }} />
-              </div>
-              <p className="remaining-info">
-                남은 토큰: {remainingQuantity}개 ({remainingPct}%)
-              </p>
-              <p className="unit-price">토큰 개당 가격: {product.unitPrice.toLocaleString()}원</p>
-
-              <label>
-                수량:
-                <input
-                  type="number"
-                  min="1"
-                  max={remainingQuantity}
-                  value={purchaseQuantity}
-                  onChange={(e) => setPurchaseQuantity(parseInt(e.target.value) || 1)}
-                />
-              </label>
-              <p>You can buy up to {remainingQuantity} tokens</p>
-              <p>Total: {totalCost.toLocaleString()}원</p>
-              <button onClick={() => {
-                console.log('🔍 ProductDetail - 구매하기 버튼 클릭됨:', {
-                  purchaseQuantity,
-                  remainingQuantity,
-                  id
-                });
-                handlePurchase();
-              }}>구매하기</button>
-            </div>
-          )}
         </div>
       </div>
     </div>

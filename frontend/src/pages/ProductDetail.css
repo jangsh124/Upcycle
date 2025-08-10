@@ -161,17 +161,7 @@
 
 
 
-/* standalone purchase widget */
-.standalone-purchase-widget {
-  margin: 20px 0;
-  padding: 16px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-}
 
-.standalone-purchase-widget h4 {
-  margin-bottom: 12px;
-}
 
 /* 프로덕트 설명 섹션 */
 .product-description-section {
@@ -182,108 +172,9 @@
   white-space: pre-wrap;
 }
 
-/* 전체 매수 버튼 */
-.buy-all-section {
-  margin-top: 16px;
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-}
 
-.buy-all-section button {
-  margin-top: 8px;
-  padding: 8px 12px;
-  background-color: #2471e7;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
 
-.buy-all-section button:hover {
-  background-color: #1a5bc7;
-}
 
-/* 수량 지정 매수 섹션 */
-.token-purchase {
-  margin-top: 16px;
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-}
-
-.token-purchase button {
-  margin-top: 8px;
-  padding: 8px 12px;
-  background-color: #2471e7;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.token-purchase button:hover {
-  background-color: #1a5bc7;
-}
-
-/* 잔여 % 게이지 바 컨테이너 */
-.remaining-gauge-container {
-  width: 100%;
-  height: 8px;
-  background: #e0e0e0;
-  border-radius: 4px;
-  overflow: hidden;
-  margin: 8px 0;
-}
-
-/* 잔여 % 게이지 바 채우기 */
-.remaining-gauge-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #4caf50, #8bc34a);
-  transition: width 0.3s ease;
-}
-
-/* 잔여 정보 */
-.remaining-info {
-  margin: 8px 0;
-  font-size: 14px;
-  color: #666;
-}
-
-/* 단위 가격 */
-.unit-price {
-  margin: 8px 0;
-  font-size: 14px;
-  color: #333;
-  font-weight: 600;
-}
-
-/* 수량 입력 */
-.token-purchase label {
-  display: block;
-  margin: 12px 0 8px 0;
-  font-weight: 600;
-  color: #333;
-}
-
-.token-purchase input {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-}
-
-.token-purchase input:focus {
-  outline: none;
-  border-color: #2471e7;
-}
-
-.token-purchase p {
-  margin: 8px 0;
-  font-size: 14px;
-  color: #666;
-}
 
 /* 반응형 디자인 */
 @media (max-width: 1200px) {
