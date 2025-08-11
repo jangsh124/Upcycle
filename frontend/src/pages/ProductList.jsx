@@ -40,43 +40,63 @@ export default function ProductList({ userEmail }) {
   }, [sort]);
 
   return (
-    <div className="product-list-container">
-      {userEmail && (
-        <div className="product-add-container">
-          <Link to="/product-form" className="product-add-button">
-            상품 등록
-          </Link>
+    <div className="instagram-feed-container">
+      {/* 헤더 영역 */}
+      <div className="feed-header">
+        <div className="header-content">
+          <h1 className="feed-title">디지털 갤러리</h1>
+          {userEmail && (
+            <Link to="/product-form" className="add-post-button">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </Link>
+          )}
         </div>
-      )}
-
-      {/* 정렬 드롭다운 */}
-      <div className="sort-container">
-        <label htmlFor="sort-select">정렬:</label>
-        <select
-          id="sort-select"
-          value={sort}
-          onChange={e => setSort(e.target.value)}
-        >
-          {SORT_OPTIONS.map(option => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+        
+        {/* 정렬 옵션 */}
+        <div className="sort-container">
+          <select
+            value={sort}
+            onChange={e => setSort(e.target.value)}
+            className="sort-select"
+          >
+            {SORT_OPTIONS.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      <h2>상품 목록</h2>
-      {loading ? (
-        <div className="loading">로딩 중…</div>
-      ) : products.length === 0 ? (
-        <div className="no-products">등록된 상품이 없습니다.</div>
-      ) : (
-        <div className="product-grid">
-          {products.map(product => (
-            <ProductCard key={product._id} product={product} />
-          ))}
-        </div>
-      )}
+      {/* 피드 영역 */}
+      <div className="feed-content">
+        {loading ? (
+          <div className="loading-container">
+            <div className="loading-spinner"></div>
+            <p>로딩 중...</p>
+          </div>
+        ) : products.length === 0 ? (
+          <div className="empty-feed">
+            <div className="empty-icon">📦</div>
+            <h3>아직 등록된 상품이 없어요</h3>
+            <p>첫 번째 상품을 등록해보세요!</p>
+            {userEmail && (
+              <Link to="/product-form" className="empty-add-button">
+                상품 등록하기
+              </Link>
+            )}
+          </div>
+        ) : (
+          <div className="instagram-feed">
+            {products.map(product => (
+              <ProductCard key={product._id} product={product} />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -62,8 +62,47 @@ function AppContent({
     navigate("/login");
   };
 
-  return (
+    return (
     <>
+      <div className="app-content">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/products" element={<ProductList userEmail={userEmail} />} />
+          <Route path="/product-form" element={<ProductForm />} />
+          <Route
+            path="/login"
+            element={<Login setUserEmail={setUserEmail} />}
+          />
+          <Route path="/signup" element={<Signup />} />
+          <Route
+            path="/forgot-password"
+            element={<ForgotPassword />}
+          />
+          <Route
+            path="/reset-password"
+            element={<ResetPassword setUserEmail={setUserEmail} />}
+          />
+          <Route path="/products/:id" element={<ProductDetail />} />
+          <Route path="/products/:id/payment" element={<Payment />} />
+
+          {/* 내가 등록한 상품 전체보기 */}
+          <Route
+            path="/mypage/products"
+            element={
+              userEmail ? <MyProductsPage /> : <Navigate to="/login" replace />
+            }
+          />
+
+          {/* 내 페이지 */}
+          <Route
+            path="/mypage"
+            element={userEmail ? <MyPage /> : <Navigate to="/login" replace />}
+          />
+
+          {/* 기타: 홈페이지 */}
+          <Route path="*" element={<Home />} />
+        </Routes>
+      </div>
       {!hideNav && (
         <NavBar
           userEmail={userEmail}
@@ -71,43 +110,6 @@ function AppContent({
           onLogout={handleLogout}
         />
       )}
-      <Routes>
-       <Route path="/" element={<Home />} />
-        <Route path="/products" element={<ProductList userEmail={userEmail} />} />
-        <Route path="/product-form" element={<ProductForm />} />
-        <Route
-          path="/login"
-          element={<Login setUserEmail={setUserEmail} />}
-        />
-        <Route path="/signup" element={<Signup />} />
-        <Route
-          path="/forgot-password"
-          element={<ForgotPassword />}
-        />
-        <Route
-          path="/reset-password"
-          element={<ResetPassword setUserEmail={setUserEmail} />}
-        />
-        <Route path="/products/:id" element={<ProductDetail />} />
-        <Route path="/products/:id/payment" element={<Payment />} />
-
-        {/* 내가 등록한 상품 전체보기 */}
-        <Route
-          path="/mypage/products"
-          element={
-            userEmail ? <MyProductsPage /> : <Navigate to="/login" replace />
-          }
-        />
-
-        {/* 내 페이지 */}
-        <Route
-          path="/mypage"
-          element={userEmail ? <MyPage /> : <Navigate to="/login" replace />}
-        />
-
-        {/* 기타: 홈페이지 */}
-        <Route path="*" element={<Home />} />
-      </Routes>
     </>
   );
 }
