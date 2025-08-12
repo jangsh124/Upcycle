@@ -37,6 +37,7 @@ router.get('/', async (req, res) => {
 
     const products = await Product
       .find({ title: { $regex: keyword, $options: 'i' } })
+      .populate('sellerId', 'name email')
       .sort(sortObj);
 
     res.json(products);
@@ -53,6 +54,7 @@ router.get('/my', authMiddleware, async (req, res) => {
     const sortObj = SORT_OPTIONS[req.query.sort] || SORT_OPTIONS.createdAt_desc;
     const myProducts = await Product
       .find({ sellerId: req.user.id })
+      .populate('sellerId', 'name email')
       .sort(sortObj);
 
     res.json(myProducts);
@@ -66,7 +68,7 @@ router.get('/my', authMiddleware, async (req, res) => {
 // GET /api/products/:id
 router.get('/:id', async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findById(req.params.id).populate('sellerId', 'name email');
     if (!product) return res.status(404).json({ error: 'Product not found' });
     // 기존 데이터에는 tokenSupply/tokenPrice 값이 없을 수 있으므로 기본값을 설정
     if (product.tokenSupply === undefined || product.tokenSupply === null) {
@@ -91,7 +93,7 @@ router.get('/:id', async (req, res) => {
 router.post('/', authMiddleware, upload.array('images', 5), async (req, res) => {
   try {
     const { title, description, price, location, tokenCount, tokenSupply, tokenPrice,
-            sharePercentage, shareQuantity, unitPrice } = req.body;
+            sharePercentage, shareQuantity, unitPrice, tier } = req.body;
     const parsedCount = parseInt(tokenCount, 10) || 100;
     const parsedSupply = tokenSupply !== undefined ? parseInt(tokenSupply, 10) : parsedCount;
     const parsedSharePercentage = sharePercentage !== undefined ? parseFloat(sharePercentage) : 0;
@@ -113,6 +115,7 @@ router.post('/', authMiddleware, upload.array('images', 5), async (req, res) => 
       sharePercentage: parsedSharePercentage,
       shareQuantity:   parsedShareQuantity,
       unitPrice:       parsedUnitPrice,
+      tier: tier || 'free',
       images: imageFiles,
       sellerId: req.user.id,
     });

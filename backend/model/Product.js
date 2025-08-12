@@ -20,7 +20,10 @@ const productSchema = new mongoose.Schema({
     gugun: { type: String, required: true }
   },
 
-  sellerId:        { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
+  sellerId:        { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  
+  // 프리미엄/VIP 구분 필드
+  tier:            { type: String, enum: ['free', 'premium', 'vip'], default: 'free' }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Product', productSchema);

@@ -15,6 +15,14 @@ export default function MyPage() {
   const [isEditing, setIsEditing] = useState(false);
   const navigate = useNavigate();
 
+  // 구독 정보 상태
+  const [subscription, setSubscription] = useState({
+    tier: 'free',
+    isActive: false,
+    startDate: null,
+    endDate: null
+  });
+
   useEffect(() => {
     // 유저 정보 불러오기
     const fetchUser = async () => {
@@ -30,6 +38,7 @@ export default function MyPage() {
         );
         const data = res.data.user || res.data;
         setUser(data);
+        setSubscription(data.subscription || { tier: 'free', isActive: false });
       } catch (err) {
         console.error("유저 정보 로드 오류:", err);
         if (err.response?.status === 403) {
@@ -118,11 +127,135 @@ export default function MyPage() {
     }
   };
 
+  // 구독 관리 함수들
+  const handleSubscribe = (plan) => {
+    // 결제 페이지로 이동
+    navigate(`/payment?plan=${plan}`);
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!window.confirm("구독을 해지하시겠습니까?")) return;
+    
+    try {
+      const token = localStorage.getItem("token");
+      await axios.patch(
+        "/api/user/subscription/cancel",
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      setSubscription(prev => ({ ...prev, isActive: false, tier: 'free' }));
+      alert("구독이 해지되었습니다.");
+    } catch (err) {
+      console.error("구독 해지 실패:", err);
+      alert("구독 해지에 실패했습니다.");
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "없음";
+    return new Date(dateString).toLocaleDateString('ko-KR');
+  };
+
+  const getSubscriptionStatus = () => {
+    if (!subscription.isActive) return "Free";
+    return subscription.tier === 'premium' ? 'Premium' : 'VIP';
+  };
+
+  const getSubscriptionBenefits = () => {
+    switch (subscription.tier) {
+      case 'premium':
+        return ['Free + Premium 작품 보기', 'Free + Premium 작품 등록'];
+      case 'vip':
+        return ['모든 작품 보기', '모든 등급 작품 등록'];
+      default:
+        return ['Free 작품만 보기/등록'];
+    }
+  };
+
   return (
     <div className="mypage-main">
-      {/* 왼쪽 - 프로필 카드/지갑 */}
+      {/* 왼쪽 - 프로필 카드/지갑/구독 */}
       <div className="mypage-profile-col">
         <ProfileCard user={user} onEditClick={() => setIsEditing(true)} />
+        
+        {/* 구독 관리 섹션 */}
+        <div className="subscription-section">
+          <h3>구독 관리</h3>
+          <div className="subscription-info">
+            <div className="subscription-status">
+              <span className="status-label">현재 구독:</span>
+              <span className={`status-value ${subscription.tier}`}>
+                {getSubscriptionStatus()}
+              </span>
+            </div>
+            
+            {subscription.isActive && (
+              <>
+                <div className="subscription-dates">
+                  <div>시작일: {formatDate(subscription.startDate)}</div>
+                  <div>만료일: {formatDate(subscription.endDate)}</div>
+                </div>
+                <div className="subscription-benefits">
+                  <h4>구독 혜택:</h4>
+                  <ul>
+                    {getSubscriptionBenefits().map((benefit, index) => (
+                      <li key={index}>{benefit}</li>
+                    ))}
+                  </ul>
+                </div>
+              </>
+            )}
+            
+            {!subscription.isActive && (
+              <div className="subscription-benefits">
+                <h4>현재 혜택:</h4>
+                <ul>
+                  {getSubscriptionBenefits().map((benefit, index) => (
+                    <li key={index}>{benefit}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+          
+          <div className="subscription-actions">
+            {!subscription.isActive ? (
+              <>
+                <button 
+                  className="subscribe-btn premium"
+                  onClick={() => handleSubscribe('premium')}
+                >
+                  Premium 구독하기 (월 15,000원)
+                </button>
+                <button 
+                  className="subscribe-btn vip"
+                  onClick={() => handleSubscribe('vip')}
+                >
+                  VIP 구독하기 (월 25,000원)
+                </button>
+              </>
+            ) : (
+              <>
+                {subscription.tier === 'premium' && (
+                  <button 
+                    className="upgrade-btn"
+                    onClick={() => handleSubscribe('vip')}
+                  >
+                    VIP로 업그레이드
+                  </button>
+                )}
+                <button 
+                  className="cancel-btn"
+                  onClick={handleCancelSubscription}
+                >
+                  구독 해지
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+        
         <div className="wallet-info">
           <b>지갑 주소:</b>{" "}
           {user.walletAddress
@@ -138,9 +271,9 @@ export default function MyPage() {
         </div>
       </div>
 
-      {/* 오른쪽 - 최근 상품 */}
+      {/* 오른쪽 - My Gallery */}
       <div className="mypage-products-col">
-        <h3>내가 등록한 상품</h3>
+        <h3>My Gallery</h3>
         <div className="mypage-products-list">
           {products.length === 0 ? (
             <div className="no-products">아직 상품이 없습니다.</div>

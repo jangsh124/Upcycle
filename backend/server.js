@@ -14,6 +14,7 @@ const userRoutes    = require("./routes/user");
 const daoRoutes     = require("./routes/dao");
 const orderRoutes   = require("./routes/orderRoutes");
 const holdingsRoutes = require("./routes/holdings");
+const subscriptionRoutes = require("./routes/subscription");
 
 const app = express();
 
@@ -42,6 +43,7 @@ app.use("/api/user", userRoutes);
 app.use("/api/dao", daoRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/holdings", holdingsRoutes);
+app.use("/api/subscription", subscriptionRoutes);
 
 // 5) 헬스체크 및 테스트 이메일
 app.get("/", (req, res) => res.send("✅ Server is running!"));

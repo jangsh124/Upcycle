@@ -30,6 +30,11 @@
   margin: 0;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+}
+
 .add-post-button {
   display: flex;
   align-items: center;
@@ -47,20 +52,453 @@
   background-color: #0081d6;
 }
 
-/* 정렬 컨테이너 */
-.sort-container {
+/* 사용자 메뉴 */
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-name-link {
+  text-decoration: none;
+  color: inherit;
+  transition: color 0.2s ease;
+}
+
+.user-name-link:hover {
+  color: #0095f6;
+}
+
+.user-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #262626;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.logout-btn {
+  padding: 6px 12px;
+  background-color: transparent;
+  color: #8e8e8e;
+  border: 1px solid #dbdbdb;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.logout-btn:hover {
+  background-color: #f8f9fa;
+  color: #262626;
+  border-color: #c1c1c1;
+}
+
+/* 인증 버튼 */
+.auth-buttons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.auth-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.login-btn {
+  background-color: transparent;
+  color: #0095f6;
+  border: 1px solid #0095f6;
+}
+
+.login-btn:hover {
+  background-color: #0095f6;
+  color: white;
+}
+
+.signup-btn {
+  background-color: #0095f6;
+  color: white;
+  border: 1px solid #0095f6;
+}
+
+.signup-btn:hover {
+  background-color: #0081d6;
+  border-color: #0081d6;
+}
+
+/* 검색 섹션 */
+.search-section {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.search-sort-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 800px;
+}
+
+.search-form {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.search-input-group {
+  display: flex;
+  align-items: center;
+  background-color: white;
+  border: 1px solid #dbdbdb;
+  border-radius: 24px;
+  overflow: hidden;
+  transition: border-color 0.2s ease;
+  min-width: 400px;
+  flex: 1;
+  position: relative;
+}
+
+.search-input-group:focus-within {
+  border-color: #0095f6;
+  box-shadow: 0 0 0 2px rgba(0, 149, 246, 0.1);
+}
+
+.search-type-select {
+  padding: 12px 16px;
+  border: none;
+  background-color: transparent;
+  font-size: 14px;
+  color: #262626;
+  cursor: pointer;
+  border-right: 1px solid #dbdbdb;
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.search-type-select:focus {
+  outline: none;
+}
+
+.search-input {
+  flex: 1;
+  padding: 16px;
+  padding-right: 40px;
+  border: none;
+  background-color: transparent;
+  font-size: 14px;
+  color: #262626;
+  min-width: 0;
+  outline: none;
+  line-height: 1;
+  text-align: center;
+  height: 48px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-input::placeholder {
+  color: #8e8e8e;
+  text-align: center;
+  line-height: 1;
+}
+
+.search-input:focus {
+  outline: none;
+  background-color: white;
+}
+
+.search-button {
+  padding: 10px;
+  border: none;
+  background-color: transparent;
+  color: #8e8e8e;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  pointer-events: none;
+}
+
+.search-button:hover {
+  color: #0095f6;
+}
+
+/* 가격 필터 */
+.price-filter-container {
+  position: relative;
+  margin-left: 8px;
+}
+
+.price-filter-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border: 2px solid #e8e8e8;
+  border-radius: 10px;
+  background-color: #fff;
+  color: #333;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  white-space: nowrap;
+}
+
+.price-filter-toggle:hover {
+  border-color: #0095f6;
+  color: #0095f6;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 149, 246, 0.15);
+}
+
+.price-filter-toggle.active {
+  border-color: #0095f6;
+  color: #0095f6;
+  background-color: #f0f8ff;
+  box-shadow: 0 4px 16px rgba(0, 149, 246, 0.2);
+}
+
+.price-filter-toggle svg {
+  transition: transform 0.2s ease;
+}
+
+.price-filter-toggle.active svg {
+  transform: rotate(180deg);
+}
+
+.price-filter-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: #fff;
+  border: 2px solid #e8e8e8;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  padding: 24px;
+  margin-top: 12px;
+  z-index: 1000;
+  min-width: 360px;
+  backdrop-filter: blur(10px);
+}
+
+/* 가격 타입 선택 */
+.price-type-selection {
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.price-type-label {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.price-type-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.price-type-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: 16px 20px;
+  border: 2px solid #e8e8e8;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  background-color: #fafafa;
+  position: relative;
+}
+
+.price-type-option:hover {
+  border-color: #0095f6;
+  background-color: #f0f8ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 149, 246, 0.15);
+}
+
+.price-type-option input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.price-type-option input[type="radio"]:checked + span {
+  color: #0095f6;
+  font-weight: 600;
+}
+
+.price-type-option input[type="radio"]:checked ~ .radio-custom {
+  background-color: #0095f6;
+  border-color: #0095f6;
+}
+
+.price-type-option span {
+  font-size: 15px;
+  color: #333;
+  font-weight: 500;
+  flex: 1;
+  margin-left: 12px;
+}
+
+.radio-custom {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #ccc;
+  border-radius: 50%;
+  background-color: white;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.radio-custom::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: white;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.price-type-option input[type="radio"]:checked ~ .radio-custom::after {
+  opacity: 1;
+}
+
+.price-range-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.price-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.price-input-group label {
+  font-size: 14px;
+  color: #333;
+  font-weight: 600;
+}
+
+.price-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.price-input {
+  flex: 1;
+  padding: 14px 16px;
+  padding-right: 50px;
+  border: 2px solid #e8e8e8;
+  border-radius: 10px;
+  font-size: 15px;
+  color: #333;
+  background-color: #fafafa;
+  transition: all 0.3s ease;
+  text-align: right;
+}
+
+.price-input:focus {
+  outline: none;
+  border-color: #0095f6;
+  background-color: white;
+  box-shadow: 0 0 0 3px rgba(0, 149, 246, 0.1);
+}
+
+.price-input::placeholder {
+  color: #999;
+  text-align: right;
+}
+
+.price-unit {
+  position: absolute;
+  right: 16px;
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
+  pointer-events: none;
+}
+
+.price-filter-actions {
   display: flex;
   justify-content: center;
 }
 
+.clear-filters-btn {
+  padding: 12px 24px;
+  border: 2px solid #ff4757;
+  border-radius: 10px;
+  background-color: white;
+  color: #ff4757;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.clear-filters-btn:hover {
+  background-color: #ff4757;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 71, 87, 0.3);
+}
+
+/* 정렬 컨테이너 */
+.sort-container {
+  display: flex;
+  align-items: center;
+}
+
 .sort-select {
-  padding: 8px 16px;
+  padding: 8px 14px;
   border: 1px solid #dbdbdb;
   border-radius: 8px;
   background-color: #fff;
-  font-size: 14px;
+  font-size: 13px;
   color: #262626;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .sort-select:focus {
@@ -132,6 +570,22 @@
   margin: 0 0 24px 0;
 }
 
+.clear-search-btn {
+  padding: 8px 16px;
+  background-color: #0095f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.clear-search-btn:hover {
+  background-color: #0081d6;
+}
+
 .empty-add-button {
   padding: 12px 24px;
   background-color: #0095f6;
@@ -163,8 +617,104 @@
     padding: 8px 12px;
   }
   
+  .search-sort-container {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .sort-container {
+    justify-content: center;
+  }
+  
   .feed-title {
     font-size: 20px;
+  }
+  
+  .user-menu {
+    gap: 8px;
+  }
+  
+  .user-name {
+    max-width: 120px;
+    font-size: 13px;
+  }
+  
+  .logout-btn {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+  
+  .auth-buttons {
+    gap: 8px;
+  }
+  
+  .auth-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+  
+  .search-input-group {
+    border-radius: 20px;
+  }
+  
+  .search-type-select {
+    min-width: 90px;
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+  
+  .search-form {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .price-filter-container {
+    margin-left: 0;
+    width: 100%;
+  }
+  
+  .price-filter-toggle {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .price-filter-dropdown {
+    position: static;
+    margin-top: 8px;
+    box-shadow: none;
+    border: 1px solid #dbdbdb;
+    min-width: auto;
+  }
+  
+  .price-type-options {
+    flex-direction: row;
+    gap: 16px;
+  }
+  
+  .price-type-option {
+    flex: 1;
+    justify-content: center;
+  }
+  
+  .price-input {
+    font-size: 14px;
+    padding: 12px 14px;
+    padding-right: 45px;
+  }
+  
+  .price-unit {
+    right: 14px;
+    font-size: 13px;
+  }
+  
+  .search-input {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+  
+  .search-button {
+    padding: 10px 12px;
   }
   
   .add-post-button {
@@ -202,6 +752,47 @@
   .add-post-button svg {
     width: 20px;
     height: 20px;
+  }
+  
+  .user-menu {
+    gap: 6px;
+  }
+  
+  .user-name {
+    max-width: 100px;
+    font-size: 12px;
+  }
+  
+  .logout-btn {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+  
+  .auth-btn {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+  
+  .search-type-select {
+    min-width: 80px;
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+  
+  .search-input {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+  
+  .search-button {
+    padding: 8px;
+    width: 28px;
+    height: 28px;
+  }
+  
+  .search-button svg {
+    width: 16px;
+    height: 16px;
   }
   
   /* 작은 모바일에서는 1열 그리드 */

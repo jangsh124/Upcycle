@@ -50,6 +50,155 @@
   background: #1a5bc7;
 }
 
+/* ── 구독 관리 섹션 */
+.subscription-section {
+  margin: 24px 0;
+  padding: 20px;
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border-radius: 12px;
+  border: 1px solid #dee2e6;
+  width: 100%;
+}
+
+.subscription-section h3 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+}
+
+.subscription-info {
+  margin-bottom: 20px;
+}
+
+.subscription-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.status-label {
+  font-weight: 500;
+  color: #666;
+}
+
+.status-value {
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.status-value.free {
+  background: #e9ecef;
+  color: #495057;
+}
+
+.status-value.premium {
+  background: linear-gradient(45deg, #ffd700, #ffed4e);
+  color: #000;
+}
+
+.status-value.vip {
+  background: linear-gradient(45deg, #8b5cf6, #a855f7);
+  color: white;
+}
+
+.subscription-dates {
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: #666;
+}
+
+.subscription-dates div {
+  margin-bottom: 4px;
+}
+
+.subscription-benefits {
+  margin-bottom: 16px;
+}
+
+.subscription-benefits h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.subscription-benefits ul {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 12px;
+  color: #666;
+}
+
+.subscription-benefits li {
+  margin-bottom: 4px;
+}
+
+.subscription-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.subscribe-btn, .upgrade-btn, .cancel-btn {
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.subscribe-btn.premium {
+  background: linear-gradient(45deg, #ffd700, #ffed4e);
+  color: #000;
+}
+
+.subscribe-btn.premium:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+}
+
+.subscribe-btn.vip {
+  background: linear-gradient(45deg, #8b5cf6, #a855f7);
+  color: white;
+}
+
+.subscribe-btn.vip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.upgrade-btn {
+  background: linear-gradient(45deg, #8b5cf6, #a855f7);
+  color: white;
+}
+
+.upgrade-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.cancel-btn {
+  background: #dc3545;
+  color: white;
+}
+
+.cancel-btn:hover {
+  background: #c82333;
+  transform: translateY(-1px);
+}
+
 /* ── 오른쪽 상품 칼럼 */
 .mypage-products-col {
   flex: 1;

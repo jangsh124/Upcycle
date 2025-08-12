@@ -23,6 +23,8 @@ export default function ProductForm() {
   const [existingImages, setExistingImages] = useState([]);
   const [newFiles, setNewFiles] = useState([]);
   const [mainImageIndex, setMainImageIndex] = useState(0);
+  const [tier, setTier] = useState("free");
+  const [userSubscription, setUserSubscription] = useState({ tier: 'free', isActive: false });
   const sharePctValid = (sharePercentage >= 30 && sharePercentage <= 49) || sharePercentage === 100;
   const formValid = sharePctValid;
   const getFileInfoText = () => {
@@ -49,6 +51,22 @@ export default function ProductForm() {
     const units = calculateShareUnits(); // 0.001% 단위 개수
     return units > 0 ? Math.round(totalSale / units) : 0; // 0.001% 단위당 가격
   };
+  // 사용자 구독 정보 불러오기
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      axios.get("/api/user/me", {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      .then(res => {
+        setUserSubscription(res.data.subscription || { tier: 'free', isActive: false });
+      })
+      .catch(err => {
+        console.error("구독 정보 로드 실패:", err);
+      });
+    }
+  }, []);
+
   // 수정 모드면 기존 값 불러오기
   useEffect(() => {
     if (!editId) return;
@@ -70,6 +88,7 @@ export default function ProductForm() {
         setGugun(p.location?.gugun || "");
         setMainImageIndex(p.mainImageIndex ?? 0);
         setExistingImages(Array.isArray(p.images) ? p.images : []);
+        setTier(p.tier || "free");
       })
       .catch(() => setMsg("상품 정보를 불러오는 데 실패했습니다."));
   }, [editId]);
@@ -123,6 +142,7 @@ export default function ProductForm() {
     formData.append('tokenPrice', pricePerToken.toString());
     formData.append('sharePercentage', sharePercentage.toString());
     formData.append('unitPrice', pricePerToken.toString());
+    formData.append('tier', tier);
 // 변경: location 단일 키로 JSON 문자열을 전송
     formData.append("location", JSON.stringify({ sido, gugun }));
     formData.append("mainImageIndex", mainImageIndex);
@@ -222,6 +242,64 @@ export default function ProductForm() {
           </label>
           {!sharePctValid && (
             <div className="helper-text">30~49% 또는 100%만 선택 가능합니다.</div>
+          )}
+        </div>
+
+        <div className="tier-selection-container">
+          <label>
+            작품 등급 선택
+            <select
+              value={tier}
+              onChange={e => setTier(e.target.value)}
+              disabled={!userSubscription.isActive && tier !== 'free'}
+            >
+              <option value="free">Free Exhibition (무료)</option>
+              <option 
+                value="premium" 
+                disabled={!userSubscription.isActive || userSubscription.tier === 'free'}
+              >
+                Premium (프리미엄)
+                {!userSubscription.isActive && " - 구독 필요"}
+                {userSubscription.isActive && userSubscription.tier === 'free' && " - Premium 구독 필요"}
+              </option>
+              <option 
+                value="vip" 
+                disabled={!userSubscription.isActive || userSubscription.tier !== 'vip'}
+              >
+                VIP (VIP)
+                {!userSubscription.isActive && " - 구독 필요"}
+                {userSubscription.isActive && userSubscription.tier !== 'vip' && " - VIP 구독 필요"}
+              </option>
+            </select>
+          </label>
+          <div className="tier-info">
+            {tier === 'free' && <span>모든 사용자가 볼 수 있습니다</span>}
+            {tier === 'premium' && <span>Premium 구독자만 볼 수 있습니다</span>}
+            {tier === 'vip' && <span>VIP 구독자만 볼 수 있습니다</span>}
+          </div>
+          {!userSubscription.isActive && (
+            <div className="subscription-notice">
+              <p>💡 프리미엄/VIP 작품을 등록하려면 구독이 필요합니다</p>
+              <button type="button" className="subscribe-now-btn">
+                구독하기
+              </button>
+            </div>
+          )}
+          {userSubscription.isActive && userSubscription.tier === 'free' && (
+            <div className="subscription-notice">
+              <p>💡 Premium 작품을 등록하려면 Premium 구독이 필요합니다</p>
+              <button type="button" className="subscribe-now-btn">
+                Premium 구독하기
+              </button>
+            </div>
+          )}
+          {userSubscription.isActive && userSubscription.tier === 'premium' && (
+            <div className="subscription-notice">
+              <p>💡 VIP 작품을 등록하려면 VIP 구독이 필요합니다</p>
+              <button type="button" className="subscribe-now-btn">
+                VIP 구독하기
+              </button>
+            </div>
           )}
         </div>
 

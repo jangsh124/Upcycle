@@ -1,53 +1,414 @@
-.home-container {
+/* 랜딩페이지 컨테이너 */
+.landing-container {
+  min-height: 100vh;
+  color: white;
+  position: relative;
+}
+
+/* 갤러리 분위기 강화를 위한 추가 오버레이 */
+.landing-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    /* 천장 조명 효과 */
+    linear-gradient(180deg, 
+      rgba(255,255,255,0.1) 0%, 
+      transparent 15%,
+      transparent 85%,
+      rgba(0,0,0,0.2) 100%),
+    /* 미묘한 질감 */
+    repeating-linear-gradient(90deg,
+      rgba(255,255,255,0.02) 0px,
+      rgba(255,255,255,0.02) 1px,
+      transparent 1px,
+      transparent 3px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Hero Section */
+.hero-section {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  position: relative;
+  z-index: 2;
+}
+
+.hero-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+}
+
+.hero-text {
+  text-align: left;
+}
+
+.hero-title {
+  font-size: 3.5rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  background: linear-gradient(45deg, #fff, #f0f0f0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-subtitle {
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: 16px;
+  line-height: 1.4;
+  color: #e0e0e0;
+  text-shadow: 
+    1px 1px 3px rgba(0, 0, 0, 0.8),
+    0 0 10px rgba(0, 0, 0, 0.6);
+}
+
+.hero-description {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #b0b0b0;
+  margin-bottom: 40px;
+  text-shadow: 
+    1px 1px 2px rgba(0, 0, 0, 0.8),
+    0 0 8px rgba(0, 0, 0, 0.6);
+}
+
+/* Hero Visual */
+.hero-visual {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.visual-container {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+}
+
+.artwork-preview {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  transform: rotate(-5deg);
+}
+
+.artwork-card {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 16px;
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: transform 0.3s ease;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.artwork-card:hover {
+  transform: translateY(-5px) scale(1.02);
+}
+
+.artwork-image {
+  width: 100%;
+  height: 120px;
+  background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+
+.artwork-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.artwork-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: white;
+  text-shadow: 
+    1px 1px 2px rgba(0, 0, 0, 0.8),
+    0 0 6px rgba(0, 0, 0, 0.6);
+}
+
+.artwork-price {
+  font-size: 0.8rem;
+  color: #4ecdc4;
+  font-weight: 500;
+  text-shadow: 
+    1px 1px 2px rgba(0, 0, 0, 0.8),
+    0 0 6px rgba(0, 0, 0, 0.6);
+}
+
+.artwork-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.artwork-card-link:hover {
+  transform: translateY(-5px);
+}
+
+.artwork-card-link:hover .artwork-card {
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+}
+
+/* Benefits Section */
+.benefits-section {
+  padding: 80px 20px;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10px);
+  position: relative;
+  z-index: 2;
+}
+
+.benefits-content {
+  max-width: 1200px;
+  margin: 0 auto;
   text-align: center;
 }
 
-.hero {
-  background: linear-gradient(135deg, #e0f2fe, #ffffff);
-  padding: 80px 20px;
+.section-title {
+  font-size: 2.5rem;
+  font-weight: 600;
+  margin-bottom: 60px;
+  color: white;
+  text-shadow: 
+    2px 2px 4px rgba(0, 0, 0, 0.7),
+    0 0 15px rgba(0, 0, 0, 0.5);
 }
 
-.hero-content h1 {
-  font-size: 48px;
-  margin-bottom: 16px;
-}
-
-.hero-content p {
-  font-size: 20px;
-  margin-bottom: 24px;
-  color: #555;
-}
-
-.hero-button {
-  padding: 12px 24px;
-  background: #1d4ed8;
-  color: #fff;
-  border-radius: 8px;
-  text-decoration: none;
-}
-
-.features {
-  display: flex;
-  justify-content: center;
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 40px;
-  margin: 60px 0;
 }
 
-.feature h3 {
-  font-size: 22px;
-  margin-bottom: 8px;
+.benefit-card {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  padding: 40px 30px;
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: transform 0.3s ease, background 0.3s ease;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
-.feature p {
-  font-size: 16px;
-  color: #666;
-  max-width: 240px;
+.benefit-card:hover {
+  transform: translateY(-10px);
+  background: rgba(255, 255, 255, 0.15);
 }
 
+.benefit-icon {
+  font-size: 3rem;
+  margin-bottom: 20px;
+  display: block;
+}
+
+.benefit-card h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: white;
+  text-shadow: 
+    1px 1px 3px rgba(0, 0, 0, 0.8),
+    0 0 10px rgba(0, 0, 0, 0.6);
+}
+
+.benefit-card p {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #e0e0e0;
+  text-shadow: 
+    1px 1px 2px rgba(0, 0, 0, 0.8),
+    0 0 8px rgba(0, 0, 0, 0.6);
+}
+
+/* CTA Section */
+.cta-section {
+  padding: 60px 20px 80px 20px;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+}
+
+.cta-content {
+  max-width: 600px;
+  margin: 0 auto;
+  transform: translateY(-20px);
+}
+
+.cta-content h2 {
+  font-size: 2.5rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: white;
+  text-shadow: 
+    2px 2px 4px rgba(0, 0, 0, 0.7),
+    0 0 15px rgba(0, 0, 0, 0.5);
+}
+
+.cta-content p {
+  font-size: 1.2rem;
+  color: #e0e0e0;
+  margin-bottom: 40px;
+  line-height: 1.6;
+  text-shadow: 
+    1px 1px 3px rgba(0, 0, 0, 0.8),
+    0 0 10px rgba(0, 0, 0, 0.6);
+}
+
+.cta-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+}
+
+.cta-primary {
+  padding: 16px 32px;
+  background: linear-gradient(45deg, #4ecdc4, #44a08d);
+  color: white;
+  text-decoration: none;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 1.1rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+}
+
+.cta-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(78, 205, 196, 0.4);
+}
+
+.cta-secondary {
+  padding: 16px 32px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  text-decoration: none;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 1.1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.cta-secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.cta-skip {
+  padding: 16px 32px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #e0e0e0;
+  text-decoration: none;
+  border-radius: 50px;
+  font-weight: 500;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.cta-skip:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  transform: translateY(-2px);
+}
+
+.learn-more {
+  color: #4ecdc4;
+  text-decoration: underline;
+  font-weight: 500;
+  font-size: 1rem;
+  transition: color 0.3s ease;
+}
+
+.learn-more:hover {
+  color: #44a08d;
+}
+
+/* 반응형 디자인 */
 @media (max-width: 768px) {
-  .features {
+  .hero-content {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    text-align: center;
+  }
+  
+  .hero-title {
+    font-size: 2.5rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.2rem;
+  }
+  
+  .hero-description {
+    font-size: 1rem;
+  }
+  
+  .artwork-preview {
+    transform: rotate(0deg);
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .benefits-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  
+  .cta-buttons {
     flex-direction: column;
     align-items: center;
-    gap: 24px;
+  }
+  
+  .cta-primary,
+  .cta-secondary,
+  .cta-skip {
+    width: 100%;
+    max-width: 280px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-section {
+    padding: 0 16px;
+  }
+  
+  .hero-title {
+    font-size: 2rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.1rem;
+  }
+  
+  .section-title {
+    font-size: 2rem;
+  }
+  
+  .benefit-card {
+    padding: 30px 20px;
+  }
+  
+  .cta-content h2 {
+    font-size: 2rem;
   }
 }

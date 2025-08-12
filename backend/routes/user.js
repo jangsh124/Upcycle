@@ -55,6 +55,7 @@ router.patch(
           name: user.name,
           bio: user.bio,
           profileImage: user.profileImage,
+          subscription: user.subscription,
           _id: user._id
         }
       });
@@ -92,6 +93,7 @@ router.get("/me", authMiddleware, async (req, res) => {
       name: user.name,
       bio: user.bio,
       profileImage: user.profileImage,
+      subscription: user.subscription,
       _id: user._id
     });
   } catch (err) {

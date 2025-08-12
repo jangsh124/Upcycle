@@ -4,19 +4,35 @@ import { Link } from "react-router-dom";
 import "./ProductCard.css";
 import getImageUrl from "../utils/getImageUrl";
 
-export default function ProductCard({ product, onEdit, onDelete }) {
+export default function ProductCard({ product, onEdit, onDelete, userEmail }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   
   if (!product) return null;
+
+  // 프리미엄/VIP 작품인지 확인
+  const isPremiumOrVip = product.tier === 'premium' || product.tier === 'vip';
+  const isLoggedIn = !!userEmail;
 
   // 이미지 배열 처리
   const images = product.images && product.images.length > 0 
     ? product.images 
     : [];
 
-  const handleImageClick = () => {
+  const handlePrevImage = (e) => {
+    e.stopPropagation();
     if (images.length > 1) {
-      setCurrentImageIndex((prev) => (prev + 1) % images.length);
+      setCurrentImageIndex((prev) => 
+        prev === 0 ? images.length - 1 : prev - 1
+      );
+    }
+  };
+
+  const handleNextImage = (e) => {
+    e.stopPropagation();
+    if (images.length > 1) {
+      setCurrentImageIndex((prev) => 
+        prev === images.length - 1 ? 0 : prev + 1
+      );
     }
   };
 
@@ -37,11 +53,11 @@ export default function ProductCard({ product, onEdit, onDelete }) {
       {/* 포스트 헤더 */}
       <div className="post-header">
         <div className="post-user-info">
-          <div className="user-avatar">
-            {product.user?.email?.charAt(0).toUpperCase() || 'U'}
-          </div>
+                  <div className="user-avatar">
+          {(product.sellerId?.name || product.sellerId?.email)?.charAt(0).toUpperCase() || 'U'}
+        </div>
           <div className="user-details">
-            <span className="username">{product.user?.email || '사용자'}</span>
+            <span className="username">{product.sellerId?.name || product.sellerId?.email || '사용자'}</span>
             <span className="location">{product.location?.sido} {product.location?.gugun}</span>
           </div>
         </div>
@@ -72,13 +88,71 @@ export default function ProductCard({ product, onEdit, onDelete }) {
       </div>
 
       {/* 이미지 영역 */}
-      <div className="post-image-container">
-        <img
-          className="post-image"
-          src={images.length > 0 ? getImageUrl(images[currentImageIndex]) : "/noimage.png"}
-          alt={product.title}
-          onClick={handleImageClick}
-        />
+      <div className={`post-image-container ${isPremiumOrVip ? 'premium-overlay' : ''}`}>
+        <Link to={`/products/${product._id}`} className="post-image-link">
+          <img
+            className={`post-image ${isPremiumOrVip ? 'premium-blur' : ''}`}
+            src={images.length > 0 ? getImageUrl(images[currentImageIndex]) : "/noimage.png"}
+            alt={product.title}
+          />
+        </Link>
+        
+        {/* 프리미엄/VIP 오버레이 */}
+        {isPremiumOrVip && (
+          <div className="premium-overlay-content">
+            <div className="premium-badge">
+              {product.tier === 'premium' ? 'PREMIUM' : 'VIP'}
+            </div>
+            <div className="premium-message">
+              {!isLoggedIn ? (
+                <>
+                  <h3>로그인이 필요합니다</h3>
+                  <p>이 작품을 보려면 로그인하세요</p>
+                  <Link to="/login" className="premium-btn login-btn">
+                    로그인
+                  </Link>
+                  <Link to="/signup" className="premium-btn signup-btn">
+                    가입하기
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <h3>구독이 필요합니다</h3>
+                  <p>이 작품을 보려면 {product.tier === 'premium' ? 'Premium' : 'VIP'} 플랜에 가입하세요</p>
+                  <button className="premium-btn subscribe-btn">
+                    구독하기
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+        
+        {/* 좌우 화살표 버튼 */}
+        {images.length > 1 && (
+          <>
+            <button 
+              className="image-nav-btn image-nav-left"
+              onClick={handlePrevImage}
+              aria-label="이전 이미지"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="15,18 9,12 15,6"></polyline>
+              </svg>
+            </button>
+            <button 
+              className="image-nav-btn image-nav-right"
+              onClick={handleNextImage}
+              aria-label="다음 이미지"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="9,18 15,12 9,6"></polyline>
+              </svg>
+            </button>
+          </>
+        )}
+        
+        {/* 이미지 인디케이터 */}
         {images.length > 1 && (
           <div className="image-indicators">
             {images.map((_, index) => (
@@ -112,7 +186,7 @@ export default function ProductCard({ product, onEdit, onDelete }) {
         </div>
 
         <div className="post-caption">
-          <span className="caption-username">{product.user?.email || '사용자'}</span>
+          <span className="caption-username">{product.sellerId?.name || product.sellerId?.email || '사용자'}</span>
           <span className="caption-text">{product.title}</span>
         </div>
 

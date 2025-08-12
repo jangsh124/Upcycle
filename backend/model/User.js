@@ -9,7 +9,15 @@ const userSchema = new mongoose.Schema({
   walletAddress: { type: String, default: null },  // ✅ 여기 추가됨
   name: { type: String, default: "" },
   bio: { type: String, default: "" },
-  profileImage: { type: String, default: "" }
+  profileImage: { type: String, default: "" },
+  
+  // 구독 정보
+  subscription: {
+    tier: { type: String, enum: ['free', 'premium', 'vip'], default: 'free' },
+    startDate: { type: Date },
+    endDate: { type: Date },
+    isActive: { type: Boolean, default: false }
+  }
 });
 
 module.exports = mongoose.model('User', userSchema);

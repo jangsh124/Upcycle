@@ -39,7 +39,7 @@ export default function MyProductsPage() {
 
   return (
     <div className="my-products-page">
-      <h2>내가 등록한 모든 상품</h2>
+      <h2>My Gallery - All Works</h2>
       {/* onEdit, onDelete 없이 products만 전달 */}
       <MyProductList products={products} />
     </div>

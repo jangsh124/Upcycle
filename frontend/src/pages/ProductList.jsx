@@ -17,6 +17,11 @@ export default function ProductList({ userEmail }) {
   const [products, setProducts] = useState([]);
   const [sort, setSort]         = useState("createdAt_desc");
   const [loading, setLoading]   = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchType, setSearchType] = useState("name"); // name, artist
+  const [priceRange, setPriceRange] = useState({ min: "", max: "" });
+  const [showPriceFilter, setShowPriceFilter] = useState(false);
+  const [priceFilterType, setPriceFilterType] = useState("total"); // "total" or "perToken"
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -39,35 +44,248 @@ export default function ProductList({ userEmail }) {
     fetchProducts();
   }, [sort]);
 
+  // 검색 및 가격 필터링
+  const filteredProducts = products.filter(product => {
+    // 검색어 필터링
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      switch (searchType) {
+        case "name":
+          if (!product.title?.toLowerCase().includes(term)) return false;
+          break;
+
+        case "artist":
+          if (!product.sellerId?.name?.toLowerCase().includes(term) && 
+              !product.sellerId?.email?.toLowerCase().includes(term)) return false;
+          break;
+        default:
+          break;
+      }
+    }
+    
+    // 가격 범위 필터링
+    if (priceRange.min) {
+      const minPrice = parseInt(priceRange.min);
+      if (priceFilterType === "total") {
+        if (product.price < minPrice) return false;
+      } else if (priceFilterType === "perToken") {
+        // 지분당 가격 계산 (전체 가격 × 0.001%)
+        const sharePrice = Math.round(product.price * 0.00001);
+        if (sharePrice < minPrice) return false;
+      }
+    }
+    if (priceRange.max) {
+      const maxPrice = parseInt(priceRange.max);
+      if (priceFilterType === "total") {
+        if (product.price > maxPrice) return false;
+      } else if (priceFilterType === "perToken") {
+        // 지분당 가격 계산 (전체 가격 × 0.001%)
+        const sharePrice = Math.round(product.price * 0.00001);
+        if (sharePrice > maxPrice) return false;
+      }
+    }
+    
+    return true;
+  });
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    // 검색 로직은 이미 필터링으로 처리됨
+  };
+
+  const handlePriceFilterToggle = () => {
+    setShowPriceFilter(!showPriceFilter);
+  };
+
+  const handlePriceRangeChange = (type, value) => {
+    // 숫자만 추출
+    const numericValue = value.replace(/[^\d]/g, '');
+    setPriceRange(prev => ({
+      ...prev,
+      [type]: numericValue
+    }));
+  };
+
+  const formatPriceDisplay = (value) => {
+    if (!value) return '';
+    return parseInt(value).toLocaleString();
+  };
+
+  const clearAllFilters = () => {
+    setSearchTerm("");
+    setPriceRange({ min: "", max: "" });
+    setShowPriceFilter(false);
+    setPriceFilterType("total");
+  };
+
+
+
   return (
     <div className="instagram-feed-container">
       {/* 헤더 영역 */}
       <div className="feed-header">
         <div className="header-content">
           <h1 className="feed-title">디지털 갤러리</h1>
-          {userEmail && (
-            <Link to="/product-form" className="add-post-button">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-              </svg>
-            </Link>
-          )}
+          <div className="header-actions">
+            {userEmail ? (
+              <div className="user-menu">
+                <Link to="/mypage" className="user-name-link">
+                  <span className="user-name">{userEmail}</span>
+                </Link>
+                <button 
+                  onClick={() => {
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("userEmail");
+                    window.location.href = "/login";
+                  }}
+                  className="logout-btn"
+                >
+                  로그아웃
+                </button>
+              </div>
+            ) : (
+              <div className="auth-buttons">
+                <Link to="/login" className="auth-btn login-btn">
+                  로그인
+                </Link>
+                <Link to="/signup" className="auth-btn signup-btn">
+                  가입
+                </Link>
+              </div>
+            )}
+          </div>
         </div>
         
-        {/* 정렬 옵션 */}
-        <div className="sort-container">
-          <select
-            value={sort}
-            onChange={e => setSort(e.target.value)}
-            className="sort-select"
-          >
-            {SORT_OPTIONS.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+        {/* 검색 및 정렬 영역 */}
+        <div className="search-section">
+          <div className="search-sort-container">
+            {/* 정렬 옵션 */}
+            <div className="sort-container">
+              <select
+                value={sort}
+                onChange={e => setSort(e.target.value)}
+                className="sort-select"
+              >
+                {SORT_OPTIONS.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            {/* 검색 폼 */}
+            <form onSubmit={handleSearch} className="search-form">
+              <div className="search-input-group">
+                <select
+                  value={searchType}
+                  onChange={(e) => setSearchType(e.target.value)}
+                  className="search-type-select"
+                >
+                  <option value="name">작품명</option>
+                  <option value="artist">작가명</option>
+                </select>
+                <input
+                  type="text"
+                  placeholder="검색어를 입력하세요..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="search-input"
+                />
+                <button type="submit" className="search-button">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                  </svg>
+                </button>
+              </div>
+              
+              {/* 필터기능 드롭다운 */}
+              <div className="price-filter-container">
+                <button 
+                  type="button"
+                  onClick={handlePriceFilterToggle}
+                  className={`price-filter-toggle ${showPriceFilter ? 'active' : ''}`}
+                >
+                  필터기능
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="6,9 12,15 18,9"></polyline>
+                  </svg>
+                </button>
+                
+                {showPriceFilter && (
+                  <div className="price-filter-dropdown">
+                    {/* 가격 타입 선택 */}
+                    <div className="price-type-selection">
+                      <label className="price-type-label">가격 필터 타입</label>
+                      <div className="price-type-options">
+                        <label className="price-type-option">
+                          <input
+                            type="radio"
+                            name="priceType"
+                            value="total"
+                            checked={priceFilterType === "total"}
+                            onChange={(e) => setPriceFilterType(e.target.value)}
+                          />
+                          <span>전체 가격</span>
+                          <div className="radio-custom"></div>
+                        </label>
+                        <label className="price-type-option">
+                          <input
+                            type="radio"
+                            name="priceType"
+                            value="perToken"
+                            checked={priceFilterType === "perToken"}
+                            onChange={(e) => setPriceFilterType(e.target.value)}
+                          />
+                          <span>지분당 가격 (0.001%)</span>
+                          <div className="radio-custom"></div>
+                        </label>
+                      </div>
+                    </div>
+                    
+                    <div className="price-range-inputs">
+                      <div className="price-input-group">
+                        <label>최소 가격</label>
+                        <div className="price-input-wrapper">
+                          <input
+                            type="text"
+                            placeholder="0"
+                            value={formatPriceDisplay(priceRange.min)}
+                            onChange={(e) => handlePriceRangeChange('min', e.target.value)}
+                            className="price-input"
+                          />
+                          <span className="price-unit">원</span>
+                        </div>
+                      </div>
+                      <div className="price-input-group">
+                        <label>최대 가격</label>
+                        <div className="price-input-wrapper">
+                          <input
+                            type="text"
+                            placeholder="무제한"
+                            value={formatPriceDisplay(priceRange.max)}
+                            onChange={(e) => handlePriceRangeChange('max', e.target.value)}
+                            className="price-input"
+                          />
+                          <span className="price-unit">원</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="price-filter-actions">
+                      <button 
+                        type="button" 
+                        onClick={clearAllFilters}
+                        className="clear-filters-btn"
+                      >
+                        필터 초기화
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </form>
+          </div>
         </div>
       </div>
 
@@ -78,21 +296,24 @@ export default function ProductList({ userEmail }) {
             <div className="loading-spinner"></div>
             <p>로딩 중...</p>
           </div>
-        ) : products.length === 0 ? (
+        ) : filteredProducts.length === 0 ? (
           <div className="empty-feed">
-            <div className="empty-icon">📦</div>
-            <h3>아직 등록된 상품이 없어요</h3>
-            <p>첫 번째 상품을 등록해보세요!</p>
-            {userEmail && (
-              <Link to="/product-form" className="empty-add-button">
-                상품 등록하기
-              </Link>
+            <div className="empty-icon">🔍</div>
+            <h3>검색 결과가 없어요</h3>
+            <p>다른 검색어를 시도해보세요</p>
+            {searchTerm && (
+              <button 
+                onClick={() => setSearchTerm("")} 
+                className="clear-search-btn"
+              >
+                검색 초기화
+              </button>
             )}
           </div>
         ) : (
           <div className="instagram-feed">
-            {products.map(product => (
-              <ProductCard key={product._id} product={product} />
+            {filteredProducts.map(product => (
+              <ProductCard key={product._id} product={product} userEmail={userEmail} />
             ))}
           </div>
         )}

@@ -21,6 +21,7 @@ import MyPage from "./pages/Mypage";
 import MyProductsPage from "./pages/MyProductsPage";
 import ProductDetail from "./pages/ProductDetail";
 import Payment from "./pages/Payment";
+import SubscriptionPayment from "./pages/SubscriptionPayment";
 import Home from "./pages/Home";
 
 // ─── 아래 한 줄을 추가 ────────────────────────────────────
@@ -84,6 +85,7 @@ function AppContent({
           />
           <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="/products/:id/payment" element={<Payment />} />
+          <Route path="/payment" element={<SubscriptionPayment />} />
 
           {/* 내가 등록한 상품 전체보기 */}
           <Route
