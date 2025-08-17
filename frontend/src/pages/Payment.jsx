@@ -17,6 +17,10 @@ const Payment = () => {
   const [cardCVC, setCardCVC] = useState('');
   const [cardHolderName, setCardHolderName] = useState('');
   const [processing, setProcessing] = useState(false);
+  
+  // 5분 타이머 관련 상태
+  const [timeLeft, setTimeLeft] = useState(300); // 5분 = 300초
+  const [timerActive, setTimerActive] = useState(false);
 
   // URL에서 수량 파라미터 가져오기
   const searchParams = new URLSearchParams(location.search);
@@ -66,6 +70,70 @@ const Payment = () => {
     return { value: year.toString(), label: year.toString() };
   });
 
+  // 5분 타이머 useEffect
+  useEffect(() => {
+    let timer;
+    
+    if (timerActive && timeLeft > 0) {
+      timer = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            // 시간이 다 되면 자동 취소
+            handleTimeout();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [timerActive, timeLeft]);
+
+  // 타이머 시작 함수
+  const startTimer = () => {
+    setTimeLeft(300); // 5분으로 리셋
+    setTimerActive(true);
+  };
+
+  // 타이머 정지 함수
+  const stopTimer = () => {
+    setTimerActive(false);
+  };
+
+  // 시간 초과 처리 함수
+  const handleTimeout = async () => {
+    stopTimer();
+    setProcessing(false);
+    
+    // 주문 취소 처리
+    if (orderId) {
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          await axios.post(`/api/orders/${orderId}/cancel`, {}, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          console.log('⏰ 시간 초과로 주문이 자동 취소되었습니다');
+        }
+      } catch (error) {
+        console.error('주문 취소 처리 실패:', error);
+      }
+    }
+    
+    alert('결제 시간이 초과되어 주문이 취소되었습니다.');
+    navigate(`/products/${id}`);
+  };
+
+  // 시간 포맷팅 함수
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -80,6 +148,8 @@ const Payment = () => {
               headers: { Authorization: `Bearer ${token}` }
             });
             console.log('✅ 주문을 처리 중 상태로 변경했습니다');
+            // 주문 처리 시작 시 타이머 시작
+            startTimer();
           } catch (error) {
             console.log('⚠️ 주문 상태 변경 실패 (이미 처리 중이거나 주문이 없음):', error.response?.data?.error || error.message);
           }
@@ -146,6 +216,20 @@ const Payment = () => {
       });
 
       if (response.data.success) {
+        // 결제 성공 시 타이머 정지
+        stopTimer();
+        
+        // 주문 상태를 filled로 업데이트
+        try {
+          const orderId = response.data.orderId;
+          await axios.patch(`/api/orders/${orderId}/complete`, {}, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          console.log('✅ 주문 상태를 완료로 업데이트했습니다');
+        } catch (error) {
+          console.log('⚠️ 주문 상태 업데이트 실패:', error.response?.data?.error || error.message);
+        }
+        
         alert('카드 결제가 완료되었습니다!');
         navigate(`/products/${id}`);
       }
@@ -158,6 +242,8 @@ const Payment = () => {
   };
 
   const handleCancel = () => {
+    // 취소 시 타이머 정지
+    stopTimer();
     navigate(`/products/${id}`);
   };
 
@@ -306,6 +392,19 @@ const Payment = () => {
 
       {/* 오른쪽 영역 */}
       <div className="payment-summary">
+        {/* 5분 타이머 */}
+        {timerActive && (
+          <div className="payment-timer">
+            <div className="timer-icon">⏰</div>
+            <div className="timer-info">
+              <div className="timer-label">결제 제한 시간</div>
+              <div className={`timer-display ${timeLeft <= 60 ? 'warning' : ''}`}>
+                {formatTime(timeLeft)}
+              </div>
+            </div>
+          </div>
+        )}
+        
         <h3>🧾 주문 요약</h3>
         <p><strong>{product.title || product.name}</strong></p>
         <p>수량: {quantity.toLocaleString()}개</p>

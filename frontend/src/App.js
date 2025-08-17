@@ -68,7 +68,7 @@ function AppContent({
       <div className="app-content">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/products" element={<ProductList userEmail={userEmail} />} />
+          <Route path="/products" element={<ProductList userEmail={userEmail} onLogout={handleLogout} />} />
           <Route path="/product-form" element={<ProductForm />} />
           <Route
             path="/login"

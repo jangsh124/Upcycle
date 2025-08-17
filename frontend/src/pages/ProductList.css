@@ -511,6 +511,127 @@
   padding: 0;
 }
 
+/* 갤러리 섹션 */
+.gallery-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  padding: 20px 16px;
+}
+
+.section-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #262626;
+  margin: 0 0 20px 0;
+  padding: 0 8px;
+}
+
+/* Free 섹션 */
+.free-section {
+  position: relative;
+}
+
+/* Premium 섹션 */
+.premium-section {
+  position: relative;
+}
+
+.premium-section.premium-locked {
+  opacity: 0.6;
+  filter: blur(2px);
+  pointer-events: none;
+}
+
+.premium-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: 12px;
+}
+
+.premium-lock-content {
+  text-align: center;
+  color: white;
+  padding: 40px 20px;
+}
+
+.premium-lock-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.premium-lock-content h3 {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.premium-lock-content p {
+  font-size: 16px;
+  margin: 0 0 24px 0;
+  opacity: 0.9;
+}
+
+.premium-subscribe-btn {
+  display: inline-block;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.premium-subscribe-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+  color: white;
+  text-decoration: none;
+}
+
+/* Premium 구독 안내 섹션 */
+.premium-info-section {
+  margin-top: 40px;
+  padding: 40px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  text-align: center;
+  color: white;
+}
+
+.premium-info-content {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.premium-info-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.premium-info-content h3 {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.premium-info-content p {
+  font-size: 16px;
+  margin: 0 0 24px 0;
+  opacity: 0.9;
+}
+
 /* 로딩 컨테이너 */
 .loading-container {
   display: flex;

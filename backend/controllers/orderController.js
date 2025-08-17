@@ -70,14 +70,14 @@ exports.getOpenSellList = async (req, res) => {
   }
 };
 
-// 주문 취소(매도): 남은 수량이 있는 경우에 한해 소거. 동시 체결과 경합 시 안전하게 실패 처리
+// 주문 취소(매수/매도): 남은 수량이 있는 경우에 한해 소거. 동시 체결과 경합 시 안전하게 실패 처리
 exports.cancelOrder = async (req, res) => {
   try {
     const { orderId } = req.params;
     const userId = req.user.id;
 
-    // 대상 주문 조회
-    const order = await Order.findOne({ orderId, userId, type: 'sell' });
+    // 대상 주문 조회 (매수/매도 모두 가능)
+    const order = await Order.findOne({ orderId, userId });
     if (!order) return res.status(404).json({ error: 'Order not found' });
     if (order.remainingQuantity <= 0 || order.status === 'filled') {
       return res.status(400).json({ error: 'Nothing to cancel' });
@@ -96,7 +96,6 @@ exports.cancelOrder = async (req, res) => {
       {
         orderId,
         userId,
-        type: 'sell',
         status: { $in: ['open', 'partial'] },
         remainingQuantity: prevRemaining
       },
@@ -108,11 +107,13 @@ exports.cancelOrder = async (req, res) => {
       return res.status(409).json({ error: 'Cancel failed due to concurrent match. Try again.' });
     }
 
-    // 메모리 오더북에서도 제거
-    try {
-      await OrderBook.cancelOrder(order.productId.toString(), orderId);
-    } catch (e) {
-      console.warn('OrderBook.cancelOrder warning:', e.message);
+    // 메모리 오더북에서도 제거 (매도 주문인 경우만)
+    if (order.type === 'sell') {
+      try {
+        await OrderBook.cancelOrder(order.productId.toString(), orderId);
+      } catch (e) {
+        console.warn('OrderBook.cancelOrder warning:', e.message);
+      }
     }
 
     return res.json({ success: true, cancelledOrderId: orderId });
@@ -276,11 +277,53 @@ const setOrderProcessing = async (req, res) => {
   }
 };
 
+// 주문을 완료 상태로 변경 (결제 완료 시)
+const setOrderComplete = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const userId = req.user.id;
+
+    console.log(`🔄 주문 완료 상태 변경 요청: ${orderId}`);
+
+    // 주문 조회 및 권한 확인
+    const order = await Order.findOne({ orderId, userId });
+    if (!order) {
+      return res.status(404).json({ error: '주문을 찾을 수 없습니다' });
+    }
+
+    // 상태 변경 가능 여부 확인
+    if (order.status !== 'processing' && order.status !== 'open') {
+      return res.status(400).json({ 
+        error: `현재 상태(${order.status})에서는 완료로 변경할 수 없습니다` 
+      });
+    }
+
+    // 완료 상태로 변경
+    order.status = 'filled';
+    order.remainingQuantity = 0; // 모든 수량이 체결됨
+    await order.save();
+
+    console.log(`✅ 주문 완료 상태 변경 완료: ${orderId}`);
+
+    return res.status(200).json({ 
+      success: true, 
+      message: '주문이 완료 상태로 변경되었습니다',
+      orderId,
+      status: 'filled'
+    });
+
+  } catch (error) {
+    console.error('❌ 주문 완료 상태 변경 실패:', error);
+    return res.status(500).json({ error: '주문 상태 변경에 실패했습니다' });
+  }
+};
+
 module.exports = {
   getBook: exports.getBook,
   addOrder: exports.addOrder,
   getOpenSellSummary: exports.getOpenSellSummary,
   getOpenSellList: exports.getOpenSellList,
   cancelOrder: exports.cancelOrder,
-  setOrderProcessing
+  setOrderProcessing,
+  setOrderComplete
 };

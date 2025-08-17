@@ -13,7 +13,7 @@ const SORT_OPTIONS = [
   { label: "가격 높은순", value: "price_desc"     },
 ];
 
-export default function ProductList({ userEmail }) {
+export default function ProductList({ userEmail, onLogout }) {
   const [products, setProducts] = useState([]);
   const [sort, setSort]         = useState("createdAt_desc");
   const [loading, setLoading]   = useState(false);
@@ -22,6 +22,32 @@ export default function ProductList({ userEmail }) {
   const [priceRange, setPriceRange] = useState({ min: "", max: "" });
   const [showPriceFilter, setShowPriceFilter] = useState(false);
   const [priceFilterType, setPriceFilterType] = useState("total"); // "total" or "perToken"
+  const [userSubscription, setUserSubscription] = useState(null);
+  const [userLoading, setUserLoading] = useState(true);
+
+  // 사용자 구독 정보 가져오기
+  useEffect(() => {
+    const fetchUserSubscription = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          const res = await axios.get('/api/subscription/info', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setUserSubscription(res.data.subscription);
+        } else {
+          // 비회원인 경우 구독 정보를 null로 설정
+          setUserSubscription(null);
+        }
+      } catch (err) {
+        console.error('구독 정보 로드 오류:', err);
+        setUserSubscription(null);
+      } finally {
+        setUserLoading(false);
+      }
+    };
+    fetchUserSubscription();
+  }, []);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -88,6 +114,27 @@ export default function ProductList({ userEmail }) {
     return true;
   });
 
+  // 사용자가 Premium/VIP 구독자인지 확인
+  const canViewPremium = userSubscription && (userSubscription.tier === 'premium' || userSubscription.tier === 'vip') && userSubscription.isActive;
+  
+  // 사용자가 로그인했는지 확인
+  const isLoggedIn = !!localStorage.getItem('token');
+
+  // Free와 Premium 상품 분리 (권한에 따라)
+  const freeProducts = filteredProducts.filter(product => !product.tier || product.tier === 'free');
+  const premiumProducts = canViewPremium 
+    ? filteredProducts.filter(product => product.tier === 'premium' || product.tier === 'vip')
+    : []; // Premium 구독자가 아니면 Premium 상품을 아예 표시하지 않음
+
+  // 디버깅용 로그
+  console.log('🔍 Premium 접근 권한 확인:', {
+    userSubscription,
+    canViewPremium,
+    isLoggedIn,
+    freeProductsCount: freeProducts.length,
+    premiumProductsCount: premiumProducts.length
+  });
+
   const handleSearch = (e) => {
     e.preventDefault();
     // 검색 로직은 이미 필터링으로 처리됨
@@ -133,11 +180,7 @@ export default function ProductList({ userEmail }) {
                   <span className="user-name">{userEmail}</span>
                 </Link>
                 <button 
-                  onClick={() => {
-                    localStorage.removeItem("token");
-                    localStorage.removeItem("userEmail");
-                    window.location.href = "/login";
-                  }}
+                  onClick={onLogout}
                   className="logout-btn"
                 >
                   로그아웃
@@ -311,10 +354,66 @@ export default function ProductList({ userEmail }) {
             )}
           </div>
         ) : (
-          <div className="instagram-feed">
-            {filteredProducts.map(product => (
-              <ProductCard key={product._id} product={product} userEmail={userEmail} />
+          <div className="gallery-sections">
+            {/* 일반 상품 섹션 */}
+            {freeProducts.length > 0 && (
+              <div className="free-section">
+                <div className="instagram-feed">
+                              {freeProducts.map(product => (
+              <ProductCard key={product._id} product={product} userEmail={userEmail} userSubscription={userSubscription} />
             ))}
+                </div>
+              </div>
+            )}
+
+            {/* Premium 상품 섹션 - Premium 구독자에게만 표시 */}
+            {canViewPremium && premiumProducts.length > 0 && (
+              <div className="premium-section">
+                <h2 className="section-title">⭐ Premium 작품</h2>
+                <div className="instagram-feed">
+                  {premiumProducts.map(product => (
+                    <ProductCard key={product._id} product={product} userEmail={userEmail} userSubscription={userSubscription} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Premium 구독 안내 섹션 - Premium 구독자가 아닌 경우 */}
+            {!canViewPremium && (
+              <div className="premium-info-section">
+                <div className="premium-info-content">
+                  <div className="premium-info-icon">⭐</div>
+                  <h3>Premium 작품이 더 있습니다</h3>
+                  <p>Premium 구독으로 더 많은 작품을 만나보세요</p>
+                  {isLoggedIn ? (
+                    <Link to="/subscription?plan=premium" className="premium-subscribe-btn">
+                      Premium 구독하기
+                    </Link>
+                  ) : (
+                    <Link to="/signup" className="premium-subscribe-btn">
+                      회원가입 및 구독
+                    </Link>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* 검색 결과가 없을 때 */}
+            {freeProducts.length === 0 && premiumProducts.length === 0 && (
+              <div className="empty-feed">
+                <div className="empty-icon">🔍</div>
+                <h3>검색 결과가 없어요</h3>
+                <p>다른 검색어를 시도해보세요</p>
+                {searchTerm && (
+                  <button 
+                    onClick={() => setSearchTerm("")} 
+                    className="clear-search-btn"
+                  >
+                    검색 초기화
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -121,7 +121,7 @@ const SubscriptionPayment = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      alert('구독이 성공적으로 완료되었습니다!');
+      alert('구독이 성공적으로 완료되었습니다! 기존 상품들이 Premium으로 업그레이드되었습니다.');
       navigate('/mypage');
     } catch (err) {
       console.error('구독 결제 실패:', err);

@@ -1,10 +1,11 @@
 // src/components/ProductCard.jsx
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { getPremiumImageUrl, canViewPremiumContent } from "../utils/premiumImageUtils";
 import "./ProductCard.css";
 import getImageUrl from "../utils/getImageUrl";
 
-export default function ProductCard({ product, onEdit, onDelete, userEmail }) {
+export default function ProductCard({ product, onEdit, onDelete, userEmail, userSubscription }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   
   if (!product) return null;
@@ -12,6 +13,7 @@ export default function ProductCard({ product, onEdit, onDelete, userEmail }) {
   // 프리미엄/VIP 작품인지 확인
   const isPremiumOrVip = product.tier === 'premium' || product.tier === 'vip';
   const isLoggedIn = !!userEmail;
+  const canViewPremium = canViewPremiumContent(userSubscription, isLoggedIn);
 
   // 이미지 배열 처리
   const images = product.images && product.images.length > 0 
@@ -88,17 +90,23 @@ export default function ProductCard({ product, onEdit, onDelete, userEmail }) {
       </div>
 
       {/* 이미지 영역 */}
-      <div className={`post-image-container ${isPremiumOrVip ? 'premium-overlay' : ''}`}>
+      <div className={`post-image-container ${isPremiumOrVip && !canViewPremium ? 'premium-overlay' : ''}`}>
         <Link to={`/products/${product._id}`} className="post-image-link">
           <img
-            className={`post-image ${isPremiumOrVip ? 'premium-blur' : ''}`}
-            src={images.length > 0 ? getImageUrl(images[currentImageIndex]) : "/noimage.png"}
+            className={`post-image ${isPremiumOrVip && !canViewPremium ? 'premium-blur' : ''}`}
+            src={
+              images.length > 0 
+                ? (isPremiumOrVip && !canViewPremium 
+                    ? getPremiumImageUrl(product._id, images[currentImageIndex].split('/').pop(), userSubscription, isLoggedIn)
+                    : getImageUrl(images[currentImageIndex]))
+                : "/noimage.png"
+            }
             alt={product.title}
           />
         </Link>
         
         {/* 프리미엄/VIP 오버레이 */}
-        {isPremiumOrVip && (
+        {isPremiumOrVip && !canViewPremium && (
           <div className="premium-overlay-content">
             <div className="premium-badge">
               {product.tier === 'premium' ? 'PREMIUM' : 'VIP'}
@@ -119,9 +127,9 @@ export default function ProductCard({ product, onEdit, onDelete, userEmail }) {
                 <>
                   <h3>구독이 필요합니다</h3>
                   <p>이 작품을 보려면 {product.tier === 'premium' ? 'Premium' : 'VIP'} 플랜에 가입하세요</p>
-                  <button className="premium-btn subscribe-btn">
+                  <Link to="/subscription?plan=premium" className="premium-btn subscribe-btn">
                     구독하기
-                  </button>
+                  </Link>
                 </>
               )}
             </div>

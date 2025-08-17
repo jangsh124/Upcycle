@@ -1,5 +1,6 @@
 const express = require('express');
 const User = require('../model/User');
+const Product = require('../model/Product');
 const authMiddleware = require('../middleware/auth');
 const router = express.Router();
 
@@ -48,10 +49,24 @@ router.post('/purchase', authMiddleware, async (req, res) => {
 
     await user.save();
 
+    // 구독 구매 시 기존 상품들의 tier 업데이트
+    try {
+      const updatedProducts = await Product.updateMany(
+        { uploader: user._id, tier: { $ne: 'premium' } }, // premium이 아닌 상품들
+        { tier: plan }
+      );
+      
+      console.log(`✅ 구독 구매로 인한 상품 tier 업데이트: ${updatedProducts.modifiedCount}개 상품이 ${plan}으로 변경됨`);
+    } catch (productError) {
+      console.error('⚠️ 상품 tier 업데이트 실패:', productError);
+      // 상품 업데이트 실패해도 구독은 성공으로 처리
+    }
+
     res.json({
       success: true,
       message: '구독이 성공적으로 완료되었습니다.',
-      subscription: user.subscription
+      subscription: user.subscription,
+      productsUpdated: true
     });
 
   } catch (err) {
@@ -78,10 +93,24 @@ router.patch('/cancel', authMiddleware, async (req, res) => {
 
     await user.save();
 
+    // 구독 해지 시 상품들의 tier를 free로 되돌리기
+    try {
+      const updatedProducts = await Product.updateMany(
+        { uploader: user._id, tier: { $in: ['premium', 'vip'] } }, // premium/vip 상품들
+        { tier: 'free' }
+      );
+      
+      console.log(`✅ 구독 해지로 인한 상품 tier 업데이트: ${updatedProducts.modifiedCount}개 상품이 free로 변경됨`);
+    } catch (productError) {
+      console.error('⚠️ 상품 tier 업데이트 실패:', productError);
+      // 상품 업데이트 실패해도 구독 해지는 성공으로 처리
+    }
+
     res.json({
       success: true,
       message: '구독이 해지되었습니다.',
-      subscription: user.subscription
+      subscription: user.subscription,
+      productsUpdated: true
     });
 
   } catch (err) {
