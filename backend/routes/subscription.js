@@ -49,12 +49,12 @@ router.post('/purchase', authMiddleware, async (req, res) => {
 
     await user.save();
 
-    // 구독 구매 시 기존 상품들의 tier 업데이트
-    try {
-      const updatedProducts = await Product.updateMany(
-        { uploader: user._id, tier: { $ne: 'premium' } }, // premium이 아닌 상품들
-        { tier: plan }
-      );
+          // 구독 구매 시 기존 상품들의 tier 업데이트
+      try {
+        const updatedProducts = await Product.updateMany(
+          { sellerId: user._id }, // 해당 사용자의 모든 상품
+          { tier: plan }
+        );
       
       console.log(`✅ 구독 구매로 인한 상품 tier 업데이트: ${updatedProducts.modifiedCount}개 상품이 ${plan}으로 변경됨`);
     } catch (productError) {
@@ -93,12 +93,12 @@ router.patch('/cancel', authMiddleware, async (req, res) => {
 
     await user.save();
 
-    // 구독 해지 시 상품들의 tier를 free로 되돌리기
-    try {
-      const updatedProducts = await Product.updateMany(
-        { uploader: user._id, tier: { $in: ['premium', 'vip'] } }, // premium/vip 상품들
-        { tier: 'free' }
-      );
+          // 구독 해지 시 상품들의 tier를 free로 되돌리기
+      try {
+        const updatedProducts = await Product.updateMany(
+          { sellerId: user._id, tier: { $in: ['premium', 'vip'] } }, // premium/vip 상품들
+          { tier: 'free' }
+        );
       
       console.log(`✅ 구독 해지로 인한 상품 tier 업데이트: ${updatedProducts.modifiedCount}개 상품이 free로 변경됨`);
     } catch (productError) {

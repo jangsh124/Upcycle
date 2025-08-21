@@ -117,14 +117,12 @@ export default function ProductList({ userEmail, onLogout }) {
   // 사용자가 Premium/VIP 구독자인지 확인
   const canViewPremium = userSubscription && (userSubscription.tier === 'premium' || userSubscription.tier === 'vip') && userSubscription.isActive;
   
-  // 사용자가 로그인했는지 확인
+  // 로그인 상태 확인
   const isLoggedIn = !!localStorage.getItem('token');
 
-  // Free와 Premium 상품 분리 (권한에 따라)
+  // Free와 Premium 상품 분리 (모든 사용자에게 표시)
   const freeProducts = filteredProducts.filter(product => !product.tier || product.tier === 'free');
-  const premiumProducts = canViewPremium 
-    ? filteredProducts.filter(product => product.tier === 'premium' || product.tier === 'vip')
-    : []; // Premium 구독자가 아니면 Premium 상품을 아예 표시하지 않음
+  const premiumProducts = filteredProducts.filter(product => product.tier === 'premium' || product.tier === 'vip');
 
   // 디버깅용 로그
   console.log('🔍 Premium 접근 권한 확인:', {
@@ -132,7 +130,9 @@ export default function ProductList({ userEmail, onLogout }) {
     canViewPremium,
     isLoggedIn,
     freeProductsCount: freeProducts.length,
-    premiumProductsCount: premiumProducts.length
+    premiumProductsCount: premiumProducts.length,
+    totalProducts: filteredProducts.length,
+    premiumProducts: premiumProducts.map(p => ({ id: p._id, title: p.title, tier: p.tier }))
   });
 
   const handleSearch = (e) => {
@@ -366,34 +366,14 @@ export default function ProductList({ userEmail, onLogout }) {
               </div>
             )}
 
-            {/* Premium 상품 섹션 - Premium 구독자에게만 표시 */}
-            {canViewPremium && premiumProducts.length > 0 && (
+            {/* Premium 상품 섹션 - 모든 사용자에게 표시 (블러 효과) */}
+            {premiumProducts.length > 0 && (
               <div className="premium-section">
                 <h2 className="section-title">⭐ Premium 작품</h2>
                 <div className="instagram-feed">
                   {premiumProducts.map(product => (
                     <ProductCard key={product._id} product={product} userEmail={userEmail} userSubscription={userSubscription} />
                   ))}
-                </div>
-              </div>
-            )}
-
-            {/* Premium 구독 안내 섹션 - Premium 구독자가 아닌 경우 */}
-            {!canViewPremium && (
-              <div className="premium-info-section">
-                <div className="premium-info-content">
-                  <div className="premium-info-icon">⭐</div>
-                  <h3>Premium 작품이 더 있습니다</h3>
-                  <p>Premium 구독으로 더 많은 작품을 만나보세요</p>
-                  {isLoggedIn ? (
-                    <Link to="/subscription?plan=premium" className="premium-subscribe-btn">
-                      Premium 구독하기
-                    </Link>
-                  ) : (
-                    <Link to="/signup" className="premium-subscribe-btn">
-                      회원가입 및 구독
-                    </Link>
-                  )}
                 </div>
               </div>
             )}

@@ -90,49 +90,28 @@ export default function ProductCard({ product, onEdit, onDelete, userEmail, user
       </div>
 
       {/* 이미지 영역 */}
-      <div className={`post-image-container ${isPremiumOrVip && !canViewPremium ? 'premium-overlay' : ''}`}>
+      <div className="post-image-container">
         <Link to={`/products/${product._id}`} className="post-image-link">
           <img
             className={`post-image ${isPremiumOrVip && !canViewPremium ? 'premium-blur' : ''}`}
             src={
               images.length > 0 
-                ? (isPremiumOrVip && !canViewPremium 
-                    ? getPremiumImageUrl(product._id, images[currentImageIndex].split('/').pop(), userSubscription, isLoggedIn)
-                    : getImageUrl(images[currentImageIndex]))
+                ? getImageUrl(images[currentImageIndex])
                 : "/noimage.png"
             }
             alt={product.title}
           />
         </Link>
         
-        {/* 프리미엄/VIP 오버레이 */}
-        {isPremiumOrVip && !canViewPremium && (
-          <div className="premium-overlay-content">
-            <div className="premium-badge">
-              {product.tier === 'premium' ? 'PREMIUM' : 'VIP'}
-            </div>
-            <div className="premium-message">
-              {!isLoggedIn ? (
-                <>
-                  <h3>로그인이 필요합니다</h3>
-                  <p>이 작품을 보려면 로그인하세요</p>
-                  <Link to="/login" className="premium-btn login-btn">
-                    로그인
-                  </Link>
-                  <Link to="/signup" className="premium-btn signup-btn">
-                    가입하기
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <h3>구독이 필요합니다</h3>
-                  <p>이 작품을 보려면 {product.tier === 'premium' ? 'Premium' : 'VIP'} 플랜에 가입하세요</p>
-                  <Link to="/subscription?plan=premium" className="premium-btn subscribe-btn">
-                    구독하기
-                  </Link>
-                </>
-              )}
-            </div>
+        {/* 프리미엄 배지 */}
+        {isPremiumOrVip && (
+          <div className="premium-badge">
+            {product.tier === 'premium' ? 'PREMIUM' : 'VIP'}
+            {!canViewPremium && (
+              <div className="premium-badge-tooltip">
+                {!isLoggedIn ? '로그인 필요' : '구독 필요'}
+              </div>
+            )}
           </div>
         )}
         

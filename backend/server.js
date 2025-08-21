@@ -17,6 +17,8 @@ const holdingsRoutes = require("./routes/holdings");
 const subscriptionRoutes = require("./routes/subscription");
 const premiumImagesRoutes = require("./routes/premiumImages");
 
+
+
 const app = express();
 
 // 1) CORS 설정: React dev 서버 허용
